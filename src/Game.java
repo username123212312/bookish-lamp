@@ -2,6 +2,7 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Game {
+    private final static int[] tosses = {1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 5};
     private Board board;
     private final Scanner scanner;
 
@@ -64,10 +65,10 @@ public class Game {
         System.out.println(board.toString());
     }
 
-    private void expectiMinimax(Board currentBoard){
+    private void expectiMinimax(Board currentBoard) {
     }
 
-    private MoveResult maxMove(Board currentBoard, int alpha , int beta) {
+    private MoveResult maxMove(Board currentBoard, int alpha, int beta) {
         if (currentBoard.isFinal()) {
             return new MoveResult(null, evaluate(currentBoard));
         }

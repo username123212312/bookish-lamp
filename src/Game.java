@@ -1,4 +1,5 @@
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
 public class Game {
@@ -39,6 +40,10 @@ public class Game {
                 break;
             }
         }
+    }
+
+    private int toss(){
+        return tosses[new Random().nextInt(tosses.length)];
     }
 
     private void humanPlay() {

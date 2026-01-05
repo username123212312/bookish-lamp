@@ -15,8 +15,8 @@ public class Game {
     }
 
     public void startGame() {
-        System.out.println("Welcome to Connect Three (3x3)!");
-        System.out.println("Align 3 pieces to win. Columns are 1, 2, 3.");
+        System.out.println("Welcome to Senet (3x10)!");
+        System.out.println("Game description");
         System.out.println(board.toString());
         System.out.println("------------------------------------------------");
 
@@ -25,12 +25,7 @@ public class Game {
             humanPlay();
             if (board.checkWin(HUMAN)) {
                 System.out.println(board.toString());
-                System.out.println("You connected 3! You Win!");
-                break;
-            }
-            if (board.isFull()) {
-                System.out.println(board.toString());
-                System.out.println("Draw!");
+                System.out.println("You Win!");
                 break;
             }
 
@@ -39,12 +34,7 @@ public class Game {
             computerPlay();
             if (board.checkWin(COMPUTER)) {
                 System.out.println(board.toString());
-                System.out.println("Computer connected 3! You Lose!");
-                break;
-            }
-            if (board.isFull()) {
-                System.out.println(board.toString());
-                System.out.println("Draw!");
+                System.out.println("Computer Win! You Lose!");
                 break;
             }
         }
@@ -72,6 +62,9 @@ public class Game {
             this.board = result.bestBoard();
         }
         System.out.println(board.toString());
+    }
+
+    private void expectiMinimax(Board currentBoard){
     }
 
     private MoveResult maxMove(Board currentBoard, int alpha , int beta) {

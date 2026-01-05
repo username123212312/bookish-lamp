@@ -12,7 +12,6 @@ public class Board {
             list[i] = new Pawn(true);
             list[i + 1] = new Pawn(false);
         }
-        list[14] = new Pawn(true);
     }
 
     // Private constructor for deep copy
@@ -24,11 +23,11 @@ public class Board {
         return true;
     }
 
-    private List<Action> getPossibleActions(){
+    private List<Action> getPossibleActions() {
         return new ArrayList<>();
     }
 
-    private Board applyAction(Action action){
+    private Board applyAction(Action action) {
         return new Board();
     }
 
@@ -71,15 +70,7 @@ public class Board {
                 continue;
             }
             if (i > 24) {
-                String symbol = switch (i) {
-                    case 25 -> "S";//   House of Happiness
-                    case 26 -> "W";//   House of Water
-                    case 27 -> "T";//   House of Three Truths
-                    case 28 -> "A";//   House of Re-Atoum
-                    case 29 -> "H";//   House of Horus
-                    default -> "";
-                };
-                occupationPrint(stringBuilder, list[i], symbol);
+                occupationPrint(stringBuilder, list[i], getSymbol(i));
                 continue;
             }
             if (list[i] == null) {
@@ -96,5 +87,16 @@ public class Board {
     private void occupationPrint(StringBuilder sb, Pawn pawn, String symbol) {
         sb.append(symbol).append(pawn == null ? "" : pawn)
                 .append(pawn == null ? "  " : " ");
+    }
+
+    private String getSymbol(int index) {
+        return switch (index) {
+            case 25 -> "S";//   House of Happiness
+            case 26 -> "W";//   House of Water
+            case 27 -> "T";//   House of Three Truths
+            case 28 -> "A";//   House of Re-Atoum
+            case 29 -> "H";//   House of Horus
+            default -> "";
+        };
     }
 }

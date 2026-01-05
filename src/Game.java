@@ -6,8 +6,8 @@ public class Game {
     private final Scanner scanner;
 
     // Define pieces
-    private final char COMPUTER = 'X';
-    private final char HUMAN = 'O';
+    private final char COMPUTER = 'W';
+    private final char HUMAN = 'B';
 
     public Game() {
         this.board = new Board();

@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Board {
-    private Pawn[] list;
+    private final Pawn[] list;
     private boolean[] whiteList;
     private boolean[] blackList;
 

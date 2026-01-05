@@ -23,7 +23,7 @@ public class Board {
         return true;
     }
 
-    private List<Action> getPossibleActions() {
+    public List<Action> getPossibleActions(int numMoves) {
         return new ArrayList<>();
     }
 

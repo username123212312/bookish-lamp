@@ -19,15 +19,12 @@ public class Board {
         this.list = list;
     }
 
-    public boolean play(int col, char player) {
-        return true;
-    }
 
     public List<Action> getPossibleActions(int numMoves) {
         return new ArrayList<>();
     }
 
-    private Board applyAction(Action action) {
+    public Board applyAction(Action action) {
         return new Board();
     }
 

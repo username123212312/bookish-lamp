@@ -117,6 +117,8 @@ public class Game {
 
     // Evaluation Function
     private int evaluate(Board b) {
+        if (b.checkWin(COMPUTER)) return 1;
+        if (b.checkWin(HUMAN)) return -1;
         return 0;
     }
 }

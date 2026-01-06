@@ -1,6 +1,6 @@
 public class Action {
-    private Pawn pawn;
-    private int newIndex;
+    private final Pawn pawn;
+    private final int newIndex;
     private boolean isDetailed = false;
 
     public Action(Pawn pawn, int newIndex) {

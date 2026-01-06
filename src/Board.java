@@ -130,14 +130,15 @@ public class Board {
         Pawn toBeReplaced = list[toBeReplacedIndex].deepCopy();
         int replacementIndex = action.getPawn().getIndex();
         Pawn replacement = action.getPawn().deepCopy();
+        replacement.setIndex(toBeReplacedIndex);
+        list[toBeReplacedIndex] = replacement;
         if (toBeReplaced != null) {
-            replacement.setIndex(toBeReplacedIndex);
-            list[toBeReplacedIndex] = replacement;
-            toBeReplaced.setIndex(replacementIndex);
-            list[replacementIndex] = toBeReplaced;
-        } else {
-            replacement.setIndex(toBeReplacedIndex);
-            list[toBeReplacedIndex] = replacement;
+            if (toBeReplacedIndex > 26 && toBeReplacedIndex < 30) {
+                returnToHouseOfReborn(toBeReplaced);
+            } else {
+                toBeReplaced.setIndex(replacementIndex);
+                list[replacementIndex] = toBeReplaced;
+            }
         }
     }
 

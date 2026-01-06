@@ -81,7 +81,7 @@ public class Game {
         int bestScore = Integer.MIN_VALUE;
         Board bestBoard = null;
 
-        for (Board nextState : currentBoard.generateNextStates(COMPUTER)) {
+        for (Board nextState : currentBoard.generateNextStates(COMPUTER,0)) {
             int score = minMove(nextState, alpha, beta).score();
 
             if (score > bestScore) {
@@ -105,7 +105,7 @@ public class Game {
         int bestScore = Integer.MAX_VALUE;
         Board bestBoard = null;
 
-        for (Board nextState : currentBoard.generateNextStates(HUMAN)) {
+        for (Board nextState : currentBoard.generateNextStates(HUMAN,0)) {
             int score = maxMove(nextState, alpha, beta).score();
 
             if (score < bestScore) {

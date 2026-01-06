@@ -19,8 +19,7 @@ public class Board {
         this.list = list;
     }
 
-
-    public List<Action> getPossibleActions(int numMoves) {
+    private List<Action> getPossibleActions(char player, int numMoves) {
         return new ArrayList<>();
     }
 
@@ -28,16 +27,23 @@ public class Board {
         return new Board();
     }
 
-    public List<Board> generateNextStates(char player) {
-        return new ArrayList<>();
+    public List<Board> generateNextStates(char player, int numMoves) {
+        List<Board> nextStates = new ArrayList<>();
+        List<Action> possibleActions = getPossibleActions(player, numMoves);
+        for (Action possibleAction : possibleActions) {
+            Board board = new Board(this.list);
+            board.applyAction(possibleAction);
+            nextStates.add(board);
+        }
+        return nextStates;
     }
 
     public boolean isFinal() {
-        return true;
+        return whiteList.length == 7 || blackList.length == 7;
     }
 
     public boolean checkWin(char p) {
-        return true;
+        return p == 'W' ? whiteList.length == 7 : blackList.length == 7;
     }
 
     public Board deepCopy() {

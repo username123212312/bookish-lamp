@@ -2,8 +2,9 @@ public class Pawn {
     private final boolean isWhite;
     private int index;
 
-    public Pawn(boolean isWhite) {
+    public Pawn(boolean isWhite, int index) {
         this.isWhite = isWhite;
+        this.index = index;
     }
 
     public int getIndex() {
@@ -16,6 +17,10 @@ public class Pawn {
 
     public boolean isWhite() {
         return isWhite;
+    }
+
+    public Pawn deepCopy() {
+        return new Pawn(isWhite, index);
     }
 
     @Override

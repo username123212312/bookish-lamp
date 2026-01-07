@@ -47,26 +47,27 @@ public class Game {
     }
 
     private void humanPlay() {
+        int tossValue = toss();
+        System.out.println("Toss: " + tossValue);
+
+        // Generate and display possible moves based on the toss
+        List<Board> possibleMoves = board.generateNextStates(HUMAN, tossValue);
+
+        if (possibleMoves.isEmpty()) {
+            System.out.println("No valid moves available. Skipping turn.");
+            return;
+        }
+
+        // Display possible moves with indices
+        System.out.println("Available moves:");
+        for (int i = 0; i < possibleMoves.size(); i++) {
+            System.out.println("[" + (i + 1) + "] " + possibleMoves.get(i).getAction() + "\n" + possibleMoves.get(i));
+            System.out.println("------------------------------------------------");
+        }
+
         boolean validMove = false;
 
         while (!validMove) {
-            int tossValue = toss();
-            System.out.println("Toss: " + tossValue);
-
-            // Generate and display possible moves based on the toss
-            List<Board> possibleMoves = board.generateNextStates(HUMAN, tossValue);
-
-            if (possibleMoves.isEmpty()) {
-                System.out.println("No valid moves available. Skipping turn.");
-                return;
-            }
-
-            // Display possible moves with indices
-            System.out.println("Available moves:");
-            for (int i = 0; i < possibleMoves.size(); i++) {
-                System.out.println("[" + (i + 1) + "] " + possibleMoves.get(i).getAction() + "\n" + possibleMoves.get(i));
-                System.out.println("------------------------------------------------");
-            }
 
             System.out.print("Select a move (1-" + (possibleMoves.size()) + "): ");
 
@@ -86,9 +87,15 @@ public class Game {
                     board = possibleMoves.get(moveChoice - 1);
                     System.out.println("Move applied successfully!");
                     validMove = true;
-                } else {
-                    System.out.println("Invalid choice. Please select a number between 0 and " +
-                            (possibleMoves.size() - 1));
+                }
+                else {
+                    if (possibleMoves.size() == 1) {
+                        System.out.println("Invalid choice. There is only one valid move: 1");
+                    }
+                    else {
+                        System.out.println("Invalid choice. Please select a number between 1 and " +
+                                (possibleMoves.size()));
+                    }
                 }
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());

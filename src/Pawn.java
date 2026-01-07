@@ -25,6 +25,6 @@ public class Pawn {
 
     @Override
     public String toString() {
-        return isWhite ? "W" : "B";
+        return isWhite ? "\u25CF" : "\u25CB";
     }
 }

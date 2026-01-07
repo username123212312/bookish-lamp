@@ -153,7 +153,7 @@ public class Board {
             if (i < 20 && i > 9) {
                 int index = 19 - (i - 10);
                 if (index == 14) {
-                    occupationPrint(stringBuilder, list[index], "R");
+                    occupationPrint(stringBuilder, list[index], "\u2625");
                     continue;
                 }
                 if (list[index] == null) {
@@ -186,11 +186,11 @@ public class Board {
 
     private String getSymbol(int index) {
         return switch (index) {
-            case 25 -> "S";//   House of Happiness
-            case 26 -> "M";//   House of Water
-            case 27 -> "T";//   House of Three Truths
-            case 28 -> "A";//   House of Re-Atoum
-            case 29 -> "H";//   House of Horus
+            case 25 -> "\uD80C\uDD24\uD80C\uDD24";//   House of Happiness
+            case 26 -> "\uD80C\uDE17";//   House of Water
+            case 27 -> "\uD80C\uDD69";//   House of Three Truths
+            case 28 -> "\uD80C\uDC00";//   House of Re-Atoum
+            case 29 -> "\u2609";//   House of Horus
             default -> "";
         };
     }

@@ -1,38 +1,22 @@
-public class Action {
-    private final Pawn pawn;
-    private final int newIndex;
-    private boolean isDetailed = false;
-
-    public Action(Pawn pawn, int newIndex) {
-        this.pawn = pawn;
-        this.newIndex = newIndex;
-    }
-
-    private Action(Pawn pawn, int newIndex, boolean isDetailed) {
-        this.pawn = pawn;
-        this.newIndex = newIndex;
-        this.isDetailed = isDetailed;
-    }
-
-    public Pawn getPawn() {
-        return pawn;
-    }
-
-    public int getNewIndex() {
-        return newIndex;
-    }
+public record Action(Pawn pawn, int newIndex) {
+    private static boolean isDetailed = false;
 
     public Action deepCopy() {
-        return new Action(pawn.deepCopy(), newIndex, isDetailed);
+        return new Action(pawn.deepCopy(), newIndex);
     }
 
-    public void setDetailed(boolean detailed) {
-        isDetailed = detailed;
+    public static void setIsDetailed(boolean isDetailed) {
+        Action.isDetailed = isDetailed;
     }
 
     @Override
     public String toString() {
-        return "Move " + (pawn.isWhite() ? "White" : "Black")
-                + " Pawn From " + pawn.getIndex() + " To " + newIndex;
+        if (newIndex == 30) {
+            return "Promote " + (pawn.isWhite() ? "White" : "Black")
+                    + " Pawn ";
+        } else {
+            return "Move " + (pawn.isWhite() ? "White" : "Black")
+                    + " Pawn From " + pawn.getIndex() + " To " + newIndex;
+        }
     }
 }

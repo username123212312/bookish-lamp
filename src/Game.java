@@ -19,10 +19,10 @@ public class Game {
     public void startGame() {
         System.out.println("Welcome to Senet (3x10)!");
         System.out.println("Game description");
-        System.out.println(board.toString());
-        System.out.println("------------------------------------------------");
 
         while (!board.isFinal()) {
+            System.out.println(board.toString());
+            System.out.println("------------------------------------------------");
             // --- Human Turn ---
             humanPlay();
             if (board.checkWin(HUMAN)) {
@@ -64,11 +64,11 @@ public class Game {
             // Display possible moves with indices
             System.out.println("Available moves:");
             for (int i = 0; i < possibleMoves.size(); i++) {
-                System.out.println("[" + i + "] " + possibleMoves.get(i).getAction() + "\n" + possibleMoves.get(i));
+                System.out.println("[" + (i + 1) + "] " + possibleMoves.get(i).getAction() + "\n" + possibleMoves.get(i));
                 System.out.println("------------------------------------------------");
             }
 
-            System.out.print("Select a move (0-" + (possibleMoves.size() - 1) + "): ");
+            System.out.print("Select a move (1-" + (possibleMoves.size()) + "): ");
 
             // Validate input is integer
             while (!scanner.hasNextInt()) {
@@ -81,9 +81,9 @@ public class Game {
 
             try {
                 // Validate the choice is within range
-                if (moveChoice >= 0 && moveChoice < possibleMoves.size()) {
+                if (moveChoice >= 1 && moveChoice < (possibleMoves.size() + 1)) {
                     // Apply the selected move
-                    board = possibleMoves.get(moveChoice);
+                    board = possibleMoves.get(moveChoice - 1);
                     System.out.println("Move applied successfully!");
                     validMove = true;
                 } else {

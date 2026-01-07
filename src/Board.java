@@ -1,11 +1,10 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Board {
     private final Pawn[] list;
     private Action action;
-    private List<Pawn> whitePawnList = new ArrayList<>();
-    private List<Pawn> blackPawnList = new ArrayList<>();
+    private Map<Integer, Pawn> whitePawnMap = new HashMap<>();
+    private Map<Integer, Pawn> blackPawnMap = new HashMap<>();
     private List<String> whiteFinishList = new ArrayList<>();
     private List<String> blackFinishList = new ArrayList<>();
 
@@ -13,25 +12,32 @@ public class Board {
         list = new Pawn[31];
         for (int i = 0; i < 14; i = i + 2) {
             list[i] = new Pawn(true, i);
-            whitePawnList.add(list[i]);
+            whitePawnMap.put(i, list[i]);
 
             list[i + 1] = new Pawn(false, i + 1);
-            blackPawnList.add(list[i + 1]);
+            blackPawnMap.put(i + 1, list[i + 1]);
         }
     }
 
     // Private constructor for deep copy
-    private Board(Pawn[] list) {
+    private Board(Pawn[] list, Map<Integer, Pawn> whitePawnMap,
+                  Map<Integer, Pawn> blackPawnMap,
+                  List<String> whiteFinishList,
+                  List<String> blackFinishList) {
         this.list = list;
+        this.blackPawnMap = blackPawnMap;
+        this.blackFinishList = blackFinishList;
+        this.whitePawnMap = whitePawnMap;
+        this.whiteFinishList = whiteFinishList;
     }
 
     private List<Action> getPossibleActions(char player, int numMoves) {
         List<Action> possibleActions = new ArrayList<>();
-        for (Pawn pawn : player == 'W' ? whitePawnList : blackPawnList) {
+        for (Pawn pawn : player == 'W' ? whitePawnMap.values() : blackPawnMap.values()) {
             int newIndex = pawn.getIndex() + numMoves;
             Pawn nextSquare = list[newIndex];
             Action action;
-            if (nextSquare != null && (nextSquare.isWhite() != pawn.isWhite())) {
+            if (nextSquare == null || (nextSquare.isWhite() != pawn.isWhite())) {
                 if (pawn.getIndex() < 25 && newIndex <= 25) {
                     action = new Action(pawn, newIndex);
                     possibleActions.add(action);
@@ -88,7 +94,18 @@ public class Board {
                 newList[i] = list[i].deepCopy();
             }
         }
-        return new Board(newList);
+        List<String> whiteFinishList = List.copyOf(this.whiteFinishList);
+        List<String> blackFinishList = List.copyOf(this.blackFinishList);
+        Map<Integer, Pawn> whitePawnMap = new HashMap<>();
+        Map<Integer, Pawn> blackPawnMap = new HashMap<>();
+        for (Integer key : this.blackPawnMap.keySet()) {
+            blackPawnMap.put(key, this.blackPawnMap.get(key).deepCopy());
+        }
+        for (Integer key : this.whitePawnMap.keySet()) {
+            whitePawnMap.put(key, this.whitePawnMap.get(key).deepCopy());
+        }
+
+        return new Board(newList, whitePawnMap, blackPawnMap, whiteFinishList, blackFinishList);
     }
 
     public boolean isFinal() {
@@ -110,15 +127,19 @@ public class Board {
 
 
     private void returnToHouseOfReborn(Pawn pawn) {
+        int oldIndex = pawn.getIndex();
         if (list[14] == null) {
-            list[pawn.getIndex()] = null;
+            list[oldIndex] = null;
+
             pawn.setIndex(14);
+            changeIndexesInMaps(pawn, oldIndex, 14);
             list[14] = pawn;
         } else {
             for (int i = 13; i > 0; i--) {
                 if (list[i] == null) {
-                    list[pawn.getIndex()] = null;
+                    list[oldIndex] = null;
                     pawn.setIndex(i);
+                    changeIndexesInMaps(pawn, oldIndex, i);
                     list[i] = pawn;
                 }
             }
@@ -127,18 +148,34 @@ public class Board {
 
     private void replaceIfNotNull(Action action) {
         int toBeReplacedIndex = action.getNewIndex();
-        Pawn toBeReplaced = list[toBeReplacedIndex].deepCopy();
+        Pawn toBeReplaced = list[toBeReplacedIndex] == null ? null : list[toBeReplacedIndex].deepCopy();
         int replacementIndex = action.getPawn().getIndex();
         Pawn replacement = action.getPawn().deepCopy();
         replacement.setIndex(toBeReplacedIndex);
+        changeIndexesInMaps(replacement, replacementIndex, toBeReplacedIndex);
         list[toBeReplacedIndex] = replacement;
+
         if (toBeReplaced != null) {
             if (toBeReplacedIndex > 26 && toBeReplacedIndex < 30) {
                 returnToHouseOfReborn(toBeReplaced);
             } else {
                 toBeReplaced.setIndex(replacementIndex);
+                changeIndexesInMaps(toBeReplaced, toBeReplacedIndex, replacementIndex);
                 list[replacementIndex] = toBeReplaced;
             }
+        } else {
+            changeIndexesInMaps(replacement, replacementIndex, toBeReplacedIndex);
+            list[replacementIndex] = null;
+        }
+    }
+
+    private void changeIndexesInMaps(Pawn pawn, int oldIndex, int newIndex) {
+        if (pawn.isWhite()) {
+            whitePawnMap.remove(oldIndex);
+            whitePawnMap.put(newIndex, pawn);
+        } else {
+            blackPawnMap.remove(oldIndex);
+            blackPawnMap.put(newIndex, pawn);
         }
     }
 

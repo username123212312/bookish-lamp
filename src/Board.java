@@ -34,38 +34,58 @@ public class Board {
     private List<Action> getPossibleActions(char player, int numMoves) {
         List<Action> possibleActions = new ArrayList<>();
         for (Pawn pawn : player == 'W' ? whitePawnMap.values() : blackPawnMap.values()) {
-            int newIndex = pawn.getIndex() + numMoves;
+            int currentIndex = pawn.getIndex() ;
+            int newIndex = currentIndex + numMoves;
             Action action = null;
-            if (newIndex > 30) {
-                switch (pawn.getIndex()) {
-                    case 29:
-                        action = new Action(pawn, 30);
-                    case 27:
-                    case 28:
-                        returnToHouseOfReborn(pawn);
+            if(currentIndex < 25 && newIndex > 25)
+            {
+               continue ;
+            }
+            if(currentIndex == 25)
+            {
+                if(numMoves == 5) {
+                    action = new Action(pawn, 30);
                 }
-                if (action != null) {
-                    possibleActions.add(action);
-                }
-            } else {
-                Pawn nextSquare = list[newIndex];
-                if (nextSquare == null || (nextSquare.isWhite() != pawn.isWhite())) {
-                    if (pawn.getIndex() < 25 && newIndex <= 25) {
-                        action = new Action(pawn, newIndex);
-                        possibleActions.add(action);
-                    } else if (newIndex == 30) {
-                        switch (pawn.getIndex()) {
-                            case 27:
-                            case 28:
-                                action = new Action(pawn, newIndex);
-                                possibleActions.add(action);
+
+                else if (newIndex <= 29) {
+                    Pawn nextSquare = list[newIndex];
+                    if (nextSquare == null || (nextSquare.isWhite() != pawn.isWhite())) {
+                        if (!( (newIndex == 25 || newIndex == 27 || newIndex == 28) && nextSquare != null )) {
+                            action = new Action(pawn, newIndex);
                         }
-                    } else if (pawn.getIndex() >= 25) {
-                        action = new Action(pawn, newIndex);
-                        possibleActions.add(action);
                     }
                 }
             }
+
+            else if (currentIndex == 27) {
+                if (numMoves == 3) {
+                    action = new Action(pawn, 30);
+
+                }
+            }
+            else if (currentIndex == 28) {
+                if (numMoves == 2) {
+                    action = new Action(pawn, 30);
+
+                }
+            }
+            else if (currentIndex == 29) {
+               action = new Action(pawn, 30);
+
+            }
+            else if (newIndex <= 29) {
+                Pawn nextSquare = list[newIndex];
+                if (nextSquare == null || (nextSquare.isWhite() != pawn.isWhite())) {
+                    boolean isSpecialSquare = (newIndex == 25 || newIndex == 27 || newIndex == 28);
+                    if (isSpecialSquare && nextSquare != null) {
+                        continue;
+                    }
+                    action = new Action(pawn, newIndex);
+                }
+            }
+            if (action != null) {
+                    possibleActions.add(action);
+               }
         }
         return possibleActions;
     }
@@ -85,6 +105,7 @@ public class Board {
         } else {
             replaceIfNotNull(action);
         }
+        checkAndApplyPenalties(action.pawn());
     }
 
     public List<Board> generateNextStates(char player, int numMoves) {
@@ -153,6 +174,7 @@ public class Board {
                     pawn.setIndex(i);
                     changeIndexesInMaps(pawn, oldIndex, i);
                     list[i] = pawn;
+                    break;
                 }
             }
         }
@@ -161,8 +183,10 @@ public class Board {
     private void replaceIfNotNull(Action action) {
         int toBeReplacedIndex = action.newIndex();
         Pawn toBeReplaced = list[toBeReplacedIndex] == null ? null : list[toBeReplacedIndex].deepCopy();
+
         int replacementIndex = action.pawn().getIndex();
         Pawn replacement = action.pawn().deepCopy();
+
         replacement.setIndex(toBeReplacedIndex);
         changeIndexesInMaps(replacement, replacementIndex, toBeReplacedIndex);
         list[toBeReplacedIndex] = replacement;
@@ -174,9 +198,9 @@ public class Board {
                 toBeReplaced.setIndex(replacementIndex);
                 changeIndexesInMaps(toBeReplaced, toBeReplacedIndex, replacementIndex);
                 list[replacementIndex] = toBeReplaced;
-            }
+                }
+
         } else {
-            changeIndexesInMaps(replacement, replacementIndex, toBeReplacedIndex);
             list[replacementIndex] = null;
         }
     }
@@ -190,7 +214,37 @@ public class Board {
             blackPawnMap.put(newIndex, pawn);
         }
     }
+    //penalized Pawns
+    private void checkAndApplyPenalties(Pawn movedpawn) {
+       Map <Integer,Pawn> currentMap = movedpawn.isWhite() ? whitePawnMap : blackPawnMap;
 
+       List<Pawn> penalizedPawns = new ArrayList<>();
+       for (Pawn p : currentMap.values()) {
+           int position =  p.getIndex();
+           if((position == 27 || position == 28 || position == 29) && p != movedpawn ) {
+               penalizedPawns.add(p);
+           }
+       }
+       for (Pawn p : penalizedPawns) {
+           returnToHouseOfReborn(p);
+       }
+    }
+
+    // skip if no possible action and apply penalized Pawns
+    public void applySkipTurn(char player)
+    {
+        Map<Integer, Pawn> currentMap = (player == 'W') ? whitePawnMap : blackPawnMap;
+        List<Pawn> penalizedPawns = new ArrayList<>();
+        for (Pawn p : currentMap.values()) {
+            int pos = p.getIndex();
+            if (pos == 27 || pos == 28 || pos == 29) {
+                penalizedPawns.add(p);
+            }
+        }
+        for (Pawn p : penalizedPawns) {
+            returnToHouseOfReborn(p);
+        }
+    }
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();

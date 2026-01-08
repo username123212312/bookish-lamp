@@ -55,6 +55,7 @@ public class Game {
 
         if (possibleMoves.isEmpty()) {
             System.out.println("No valid moves available. Skipping turn.");
+            board.applySkipTurn(HUMAN);
             return;
         }
 
@@ -109,11 +110,13 @@ public class Game {
     private void computerPlay() {
         // Computer (Max) looks for the best move playing 'X'
         MoveResult result = maxMove(board, Integer.MIN_VALUE, Integer.MAX_VALUE);
-        if (result.bestBoard() != null) {
+        if (result != null && result.bestBoard() != null) {
             this.board = result.bestBoard();
         }
         System.out.println(board.toString());
     }
+
+
 
     private void expectiMinimax(Board currentBoard) {
     }

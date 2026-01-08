@@ -21,6 +21,8 @@ public class Game {
         System.out.println("Game description");
 
         while (!board.isFinal()) {
+            System.out.println(board.promotedNum());
+            System.out.println("------------------------------------------------");
             System.out.println(board.toString());
             System.out.println("------------------------------------------------");
             // --- Human Turn ---

@@ -3,8 +3,8 @@ import java.util.*;
 public class Board {
     private final Pawn[] list;
     private Action action;
-    private Map<Integer, Pawn> whitePawnMap = new HashMap<>();
-    private Map<Integer, Pawn> blackPawnMap = new HashMap<>();
+    private Map<Integer, Pawn> whitePawnMap = new TreeMap<>();
+    private Map<Integer, Pawn> blackPawnMap = new TreeMap<>();
     private List<String> whiteFinishList = new ArrayList<>();
     private List<String> blackFinishList = new ArrayList<>();
 
@@ -34,46 +34,37 @@ public class Board {
     private List<Action> getPossibleActions(char player, int numMoves) {
         List<Action> possibleActions = new ArrayList<>();
         for (Pawn pawn : player == 'W' ? whitePawnMap.values() : blackPawnMap.values()) {
-            int currentIndex = pawn.getIndex() ;
+            int currentIndex = pawn.getIndex();
             int newIndex = currentIndex + numMoves;
             Action action = null;
-            if(currentIndex < 25 && newIndex > 25)
-            {
-               continue ;
+            if (currentIndex < 25 && newIndex > 25) {
+                continue;
             }
-            if(currentIndex == 25)
-            {
-                if(numMoves == 5) {
+            if (currentIndex == 25) {
+                if (numMoves == 5) {
                     action = new Action(pawn, 30);
-                }
-
-                else if (newIndex <= 29) {
+                } else if (newIndex <= 29) {
                     Pawn nextSquare = list[newIndex];
                     if (nextSquare == null || (nextSquare.isWhite() != pawn.isWhite())) {
-                        if (!( (newIndex == 25 || newIndex == 27 || newIndex == 28) && nextSquare != null )) {
+                        if (!((newIndex == 25 || newIndex == 27 || newIndex == 28) && nextSquare != null)) {
                             action = new Action(pawn, newIndex);
                         }
                     }
                 }
-            }
-
-            else if (currentIndex == 27) {
+            } else if (currentIndex == 27) {
                 if (numMoves == 3) {
                     action = new Action(pawn, 30);
 
                 }
-            }
-            else if (currentIndex == 28) {
+            } else if (currentIndex == 28) {
                 if (numMoves == 2) {
                     action = new Action(pawn, 30);
 
                 }
-            }
-            else if (currentIndex == 29) {
-               action = new Action(pawn, 30);
+            } else if (currentIndex == 29) {
+                action = new Action(pawn, 30);
 
-            }
-            else if (newIndex <= 29) {
+            } else if (newIndex <= 29) {
                 Pawn nextSquare = list[newIndex];
                 if (nextSquare == null || (nextSquare.isWhite() != pawn.isWhite())) {
                     boolean isSpecialSquare = (newIndex == 25 || newIndex == 27 || newIndex == 28);
@@ -84,13 +75,14 @@ public class Board {
                 }
             }
             if (action != null) {
-                    possibleActions.add(action);
-               }
+                possibleActions.add(action);
+            }
         }
         return possibleActions;
     }
 
     public void applyAction(Action action) {
+        checkAndApplyPenalties(action.pawn().isWhite());
         if (action.newIndex() == 30) {
             list[action.pawn().getIndex()] = null;
             if (action.pawn().isWhite()) {
@@ -105,7 +97,6 @@ public class Board {
         } else {
             replaceIfNotNull(action);
         }
-        checkAndApplyPenalties(action.pawn());
     }
 
     public List<Board> generateNextStates(char player, int numMoves) {
@@ -129,8 +120,8 @@ public class Board {
         }
         List<String> whiteFinishList = new ArrayList<>(this.whiteFinishList);
         List<String> blackFinishList = new ArrayList<>(this.blackFinishList);
-        Map<Integer, Pawn> whitePawnMap = new HashMap<>();
-        Map<Integer, Pawn> blackPawnMap = new HashMap<>();
+        Map<Integer, Pawn> whitePawnMap = new TreeMap<>();
+        Map<Integer, Pawn> blackPawnMap = new TreeMap<>();
         for (Integer key : this.blackPawnMap.keySet()) {
             blackPawnMap.put(key, this.blackPawnMap.get(key).deepCopy());
         }
@@ -160,20 +151,21 @@ public class Board {
 
 
     private void returnToHouseOfReborn(Pawn pawn) {
-        int oldIndex = pawn.getIndex();
+        Pawn p = pawn.deepCopy();
+        int oldIndex = p.getIndex();
         if (list[14] == null) {
             list[oldIndex] = null;
 
-            pawn.setIndex(14);
-            changeIndexesInMaps(pawn, oldIndex, 14);
-            list[14] = pawn;
+            p.setIndex(14);
+            changeIndexesInMaps(p, oldIndex, 14);
+            list[14] = p;
         } else {
             for (int i = 13; i > 0; i--) {
                 if (list[i] == null) {
                     list[oldIndex] = null;
-                    pawn.setIndex(i);
-                    changeIndexesInMaps(pawn, oldIndex, i);
-                    list[i] = pawn;
+                    p.setIndex(i);
+                    changeIndexesInMaps(p, oldIndex, i);
+                    list[i] = p;
                     break;
                 }
             }
@@ -198,7 +190,7 @@ public class Board {
                 toBeReplaced.setIndex(replacementIndex);
                 changeIndexesInMaps(toBeReplaced, toBeReplacedIndex, replacementIndex);
                 list[replacementIndex] = toBeReplaced;
-                }
+            }
 
         } else {
             list[replacementIndex] = null;
@@ -214,40 +206,33 @@ public class Board {
             blackPawnMap.put(newIndex, pawn);
         }
     }
-    //penalized Pawns
-    private void checkAndApplyPenalties(Pawn movedpawn) {
-       Map <Integer,Pawn> currentMap = movedpawn.isWhite() ? whitePawnMap : blackPawnMap;
 
-       List<Pawn> penalizedPawns = new ArrayList<>();
-       for (Pawn p : currentMap.values()) {
-           int position =  p.getIndex();
-           if((position == 27 || position == 28 || position == 29) && p != movedpawn ) {
-               penalizedPawns.add(p);
-           }
-       }
-       for (Pawn p : penalizedPawns) {
-           returnToHouseOfReborn(p);
-       }
+
+    //penalized Pawns
+    private void checkAndApplyPenalties(boolean isWhite) {
+        for (int i = 27; i < 30; i++) {
+            Pawn p = (isWhite ? whitePawnMap : blackPawnMap)
+                    .getOrDefault(i, null);
+            if (p != null) {
+                returnToHouseOfReborn(p);
+            }
+        }
     }
 
     // skip if no possible action and apply penalized Pawns
-    public void applySkipTurn(char player)
-    {
-        Map<Integer, Pawn> currentMap = (player == 'W') ? whitePawnMap : blackPawnMap;
-        List<Pawn> penalizedPawns = new ArrayList<>();
-        for (Pawn p : currentMap.values()) {
-            int pos = p.getIndex();
-            if (pos == 27 || pos == 28 || pos == 29) {
-                penalizedPawns.add(p);
-            }
-        }
-        for (Pawn p : penalizedPawns) {
-            returnToHouseOfReborn(p);
-        }
+    public void applySkipTurn(char player) {
+        checkAndApplyPenalties(player == 'W');
     }
+
+    public String promotedNum() {
+        return "Human : " + blackFinishList.size() + " x " +
+                whiteFinishList.size() + " : Computer";
+    }
+
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
+
         for (int i = 0; i < list.length - 1; i++) {
             if (i == 10 || i == 20) {
                 stringBuilder.append("\n");

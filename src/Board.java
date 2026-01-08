@@ -82,7 +82,7 @@ public class Board {
     }
 
     public void applyAction(Action action) {
-        checkAndApplyPenalties(action.pawn().isWhite());
+
         if (action.newIndex() == 30) {
             list[action.pawn().getIndex()] = null;
             if (action.pawn().isWhite()) {
@@ -93,9 +93,9 @@ public class Board {
                 blackFinishList.add("B");
             }
         } else if (action.newIndex() == 26) {
-            returnToHouseOfReborn(action.pawn());
+            checkAndApplyPenalties(returnToHouseOfReborn(action.pawn()));
         } else {
-            replaceIfNotNull(action);
+            checkAndApplyPenalties(replaceIfNotNull(action));
         }
     }
 
@@ -150,7 +150,7 @@ public class Board {
     }
 
 
-    private void returnToHouseOfReborn(Pawn pawn) {
+    private Pawn returnToHouseOfReborn(Pawn pawn) {
         Pawn p = pawn.deepCopy();
         int oldIndex = p.getIndex();
         if (list[14] == null) {
@@ -170,9 +170,10 @@ public class Board {
                 }
             }
         }
+        return p;
     }
 
-    private void replaceIfNotNull(Action action) {
+    private Pawn replaceIfNotNull(Action action) {
         int toBeReplacedIndex = action.newIndex();
         Pawn toBeReplaced = list[toBeReplacedIndex] == null ? null : list[toBeReplacedIndex].deepCopy();
 
@@ -195,6 +196,8 @@ public class Board {
         } else {
             list[replacementIndex] = null;
         }
+
+        return replacement;
     }
 
     private void changeIndexesInMaps(Pawn pawn, int oldIndex, int newIndex) {
@@ -209,19 +212,24 @@ public class Board {
 
 
     //penalized Pawns
-    private void checkAndApplyPenalties(boolean isWhite) {
+    private void checkAndApplyPenalties(Pawn movedPawn) {
         for (int i = 27; i < 30; i++) {
-            Pawn p = (isWhite ? whitePawnMap : blackPawnMap)
+            Pawn p = (movedPawn.isWhite() ? whitePawnMap : blackPawnMap)
                     .getOrDefault(i, null);
             if (p != null) {
-                returnToHouseOfReborn(p);
+                if (movedPawn == null) {
+                    returnToHouseOfReborn(p);
+                } else if (movedPawn != p) {
+                    returnToHouseOfReborn(p);
+                }
             }
+
         }
     }
 
     // skip if no possible action and apply penalized Pawns
     public void applySkipTurn(char player) {
-        checkAndApplyPenalties(player == 'W');
+        checkAndApplyPenalties(null);
     }
 
     public String promotedNum() {

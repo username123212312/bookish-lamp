@@ -26,8 +26,15 @@ public class Game {
             System.out.println(board.toString());
             System.out.println("------------------------------------------------");
             // --- Human Turn ---
-            humanPlay();
+            humanPlay(HUMAN);
             if (board.checkWin(HUMAN)) {
+                System.out.println(board.toString());
+                System.out.println("You Win!");
+                break;
+            }
+
+            humanPlay(COMPUTER);
+            if (board.checkWin(COMPUTER)) {
                 System.out.println(board.toString());
                 System.out.println("You Win!");
                 break;
@@ -48,16 +55,16 @@ public class Game {
         return tosses[new Random().nextInt(tosses.length)];
     }
 
-    private void humanPlay() {
+    private void humanPlay(char player) {
         int tossValue = toss();
         System.out.println("Toss: " + tossValue);
 
         // Generate and display possible moves based on the toss
-        List<Board> possibleMoves = board.generateNextStates(HUMAN, tossValue);
+        List<Board> possibleMoves = board.generateNextStates(player, tossValue);
 
         if (possibleMoves.isEmpty()) {
             System.out.println("No valid moves available. Skipping turn.");
-            board.applySkipTurn(HUMAN);
+            board.applySkipTurn(player);
             return;
         }
 

@@ -3,10 +3,10 @@ import java.util.*;
 public class Board {
     private final Pawn[] list;
     private Action action;
-    private Map<Integer, Pawn> whitePawnMap = new TreeMap<>();
-    private Map<Integer, Pawn> blackPawnMap = new TreeMap<>();
-    private List<String> whiteFinishList = new ArrayList<>();
-    private List<String> blackFinishList = new ArrayList<>();
+    Map<Integer, Pawn> whitePawnMap = new TreeMap<>();
+    Map<Integer, Pawn> blackPawnMap = new TreeMap<>();
+    List<String> whiteFinishList = new ArrayList<>();
+    List<String> blackFinishList = new ArrayList<>();
 
     public Board() {
         list = new Pawn[31];

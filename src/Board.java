@@ -111,7 +111,7 @@ public class Board {
         return nextStates;
     }
 
-    private Board deepCopy() {
+    public Board deepCopy() {
         Pawn[] newList = new Pawn[31];
         for (int i = 0; i < list.length; i++) {
             if (list[i] != null) {

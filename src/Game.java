@@ -130,130 +130,77 @@ public class Game {
     private Board getBestMoveForRoll(Board currentBoard, char player, int diceRoll) {
         List<Board> possibleMoves = currentBoard.generateNextStates(player, diceRoll);
 
-        if (possibleMoves.isEmpty()) {
-            return null;
-        }
+        if (possibleMoves.isEmpty()) return null;
 
         Board bestBoard = null;
-        double bestValue = Double.NEGATIVE_INFINITY;
+        double alpha = Double.NEGATIVE_INFINITY;
 
         for (Board move : possibleMoves) {
-            // After computer moves, it's CHANCE (dice) → MIN (opponent)
-            double value = expectiminimax(move, MAX_DEPTH - 1, "MAX", player == 'W');
-            if (value > bestValue) {
-                bestValue = value;
+            // After Computer moves, we evaluate the resulting state via a CHANCE node
+            double value = expectiminimax(move, MAX_DEPTH - 1, "CHANCE", diceRoll);
+            if (value > alpha) {
+                alpha = value;
                 bestBoard = move;
             }
         }
-
         return bestBoard;
     }
 
-    // Main recursive function with all three node types
-    private double expectiminimax(Board board, int depth, String nodeType, boolean currentPlayerIsWhite) {
-        // Terminal node
-        if (depth == 0 || board.isFinal()) {
-            return SenetHeuristic.minimalHeuristic(board, currentPlayerIsWhite);
+    private double expectiminimax(Board node, int depth, String nodeType, int roll) {
+        // 1. Terminal Node / Depth Reach
+        if (depth == 0 || node.isFinal()) {
+            // Heuristic always from Computer (White) perspective
+            return SenetHeuristic.minimalHeuristic(node, true);
         }
 
-        return switch (nodeType) {
-            case "MAX" -> maxNode(board, depth, currentPlayerIsWhite);
-            case "MIN" -> minNode(board, depth, currentPlayerIsWhite);
-            case "CHANCE" -> chanceNode(board, depth, !currentPlayerIsWhite);
-            default -> 0;
-        };
-    }
+        // 2. Adversary is to play (MIN)
+        if (nodeType.equals("MIN")) {
+            double alpha = Double.POSITIVE_INFINITY;
+            List<Board> children = node.generateNextStates(HUMAN, roll);
 
-    private double maxNode(Board board, int depth, boolean currentPlayerIsWhite) {
-        // MAX node: Computer chooses best move
-        char player = currentPlayerIsWhite ? 'W' : 'B';
-        double maxValue = Double.NEGATIVE_INFINITY;
-
-        for (int i = 0; i < ROLLS.length; i++) {
-            int diceRoll = ROLLS[i];
-            List<Board> nextStates = board.generateNextStates(player, diceRoll);
-
-            if (nextStates.isEmpty()) {
-                // No moves - skip turn
-                Board skipped = board.deepCopy();
-                skipped.applySkipTurn(player);
-                double value = PROBABILITIES[i] *
-                        expectiminimax(skipped, depth - 1, "CHANCE", !currentPlayerIsWhite);
-                maxValue = Math.max(maxValue, value);
-                continue;
+            if (children.isEmpty()) {
+                Board skipped = node.deepCopy();
+                skipped.applySkipTurn(HUMAN);
+                return expectiminimax(skipped, depth - 1, "CHANCE", 0);
             }
 
-            // Find best move for this dice roll
-            double bestForThisRoll = Double.NEGATIVE_INFINITY;
-            for (Board nextState : nextStates) {
-                double value = PROBABILITIES[i] *
-                        expectiminimax(nextState, depth - 1, "CHANCE", !currentPlayerIsWhite);
-                bestForThisRoll = Math.max(bestForThisRoll, value);
+            for (Board child : children) {
+                alpha = Math.min(alpha, expectiminimax(child, depth - 1, "CHANCE", 0));
             }
-            maxValue = Math.max(maxValue, bestForThisRoll);
+            return alpha;
         }
 
-        return maxValue;
-    }
+        // 3. We are to play (MAX)
+        else if (nodeType.equals("MAX")) {
+            double alpha = Double.NEGATIVE_INFINITY;
+            List<Board> children = node.generateNextStates(COMPUTER, roll);
 
-    private double minNode(Board board, int depth, boolean currentPlayerIsWhite) {
-        // MIN node: Human chooses worst move for computer
-        char player = currentPlayerIsWhite ? 'W' : 'B';
-        double minValue = Double.POSITIVE_INFINITY;
-
-        for (int i = 0; i < ROLLS.length; i++) {
-            int diceRoll = ROLLS[i];
-            List<Board> nextStates = board.generateNextStates(player, diceRoll);
-
-            if (nextStates.isEmpty()) {
-                // No moves - skip turn
-                Board skipped = board.deepCopy();
-                skipped.applySkipTurn(player);
-                double value = PROBABILITIES[i] *
-                        expectiminimax(skipped, depth - 1, "MAX", !currentPlayerIsWhite);
-                minValue = Math.min(minValue, value);
-                continue;
+            if (children.isEmpty()) {
+                Board skipped = node.deepCopy();
+                skipped.applySkipTurn(COMPUTER);
+                return expectiminimax(skipped, depth - 1, "CHANCE", 0);
             }
 
-            // Find worst move for computer (human minimizes)
-            double worstForThisRoll = Double.POSITIVE_INFINITY;
-            for (Board nextState : nextStates) {
-                double value = expectiminimax(nextState, depth - 1, "MAX", !currentPlayerIsWhite);
-                worstForThisRoll = Math.min(worstForThisRoll, value);
+            for (Board child : children) {
+                alpha = Math.max(alpha, expectiminimax(child, depth - 1, "CHANCE", 0));
             }
-            minValue = Math.min(minValue, PROBABILITIES[i] * worstForThisRoll);
+            return alpha;
         }
 
-        return minValue;
-    }
+        // 4. Random event (CHANCE)
+        else { // nodeType.equals("CHANCE")
+            double alpha = 0;
+            for (int i = 0; i < ROLLS.length; i++) {
+                // Determine who plays after this random toss
+                // If the previous layer was MAX, the next layer (after chance) is MIN
+                // We use depth - 1 here as the random event itself is a layer
+                String nextType = (depth % 2 == 0) ? "MAX" : "MIN";
 
-    private double chanceNode(Board board, int depth, boolean nextPlayerIsWhite) {
-        // CHANCE node: Average over dice outcomes
-        double expectedValue = 0;
-        char player = nextPlayerIsWhite ? 'W' : 'B';
-
-        for (int i = 0; i < ROLLS.length; i++) {
-            int diceRoll = ROLLS[i];
-            List<Board> nextStates = board.generateNextStates(player, diceRoll);
-
-            if (nextStates.isEmpty()) {
-                // No moves - skip turn
-                Board skipped = board.deepCopy();
-                skipped.applySkipTurn(player);
-                expectedValue += PROBABILITIES[i] *
-                        expectiminimax(skipped, depth - 1, "MIN", nextPlayerIsWhite);
-                continue;
+                // For Senet, we simplify: after computer moves, it's human's turn (MIN)
+                // Since this CHANCE node is called after a move, the next player is the opponent.
+                alpha += PROBABILITIES[i] * expectiminimax(node, depth - 1, "MIN", ROLLS[i]);
             }
-
-            // After chance comes MIN (opponent's turn to choose)
-            double bestForThisRoll = Double.POSITIVE_INFINITY;
-            for (Board nextState : nextStates) {
-                double value = expectiminimax(nextState, depth - 1, "MIN", nextPlayerIsWhite);
-                bestForThisRoll = Math.min(bestForThisRoll, value);
-            }
-            expectedValue += PROBABILITIES[i] * bestForThisRoll;
+            return alpha;
         }
-
-        return expectedValue;
     }
 }

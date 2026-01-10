@@ -217,7 +217,7 @@ public class Board {
             Pawn p = (movedPawn.isWhite() ? whitePawnMap : blackPawnMap)
                     .getOrDefault(i, null);
             if (p != null) {
-                if (movedPawn == null) {
+                if (movedPawn.getIndex() == -1) {
                     returnToHouseOfReborn(p);
                 } else if (movedPawn != p) {
                     returnToHouseOfReborn(p);
@@ -229,7 +229,7 @@ public class Board {
 
     // skip if no possible action and apply penalized Pawns
     public void applySkipTurn(char player) {
-        checkAndApplyPenalties(null);
+        checkAndApplyPenalties(new Pawn(player == 'W', -1));
     }
 
     public String promotedNum() {

@@ -40,9 +40,10 @@ public class Game {
 
             // --- Human Turn ---
             System.out.println("=== HUMAN TURN ===");
-            humanPlay(HUMAN);
+            computerPlay(HUMAN);
             if (board.checkWin(HUMAN)) {
                 System.out.println(board.toString());
+                System.out.println(board.promotedNum());
                 System.out.println("You Win!");
                 break;
             }
@@ -54,9 +55,10 @@ public class Game {
 
             // --- Computer Turn ---
             System.out.println("=== COMPUTER TURN ===");
-            computerPlay();
+            computerPlay(COMPUTER);
             if (board.checkWin(COMPUTER)) {
                 System.out.println(board.toString());
+                System.out.println(board.promotedNum());
                 System.out.println("Computer Wins! You Lose!");
                 break;
             }
@@ -109,12 +111,12 @@ public class Game {
 
     // --- EXPECTIMINIMAX COMPUTER PLAY ---
 
-    private void computerPlay() {
+    private void computerPlay(char player) {
         int tossValue = toss();
         System.out.println("Computer toss: " + tossValue);
 
         // Get best move for this specific dice roll using expectiminimax
-        Board bestMove = getBestMoveForRoll(board, COMPUTER, tossValue);
+        Board bestMove = getBestMoveForRoll(board, player, tossValue);
 
         if (bestMove != null) {
             board = bestMove;
@@ -137,7 +139,7 @@ public class Game {
 
         for (Board move : possibleMoves) {
             // After computer moves, it's CHANCE (dice) → MIN (opponent)
-            double value = expectiminimax(move, MAX_DEPTH - 1, "CHANCE", player == COMPUTER);
+            double value = expectiminimax(move, MAX_DEPTH - 1, "MAX", player == 'W');
             if (value > bestValue) {
                 bestValue = value;
                 bestBoard = move;
@@ -254,5 +256,4 @@ public class Game {
 
         return expectedValue;
     }
-
 }

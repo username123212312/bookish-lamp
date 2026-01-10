@@ -1,4 +1,5 @@
 // Game.java - Complete with Expectiminimax
+
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
@@ -15,11 +16,11 @@ public class Game {
     // Constants for expectiminimax
     private static final int MAX_DEPTH = 3;
     private static final double[] PROBABILITIES = {
-            4.0/16.0,  // Roll = 1 (25%)
-            6.0/16.0,  // Roll = 2 (37.5%)
-            4.0/16.0,  // Roll = 3 (25%)
-            1.0/16.0,  // Roll = 4 (6.25%)
-            1.0/16.0   // Roll = 5 (6.25%)
+            4.0 / 16.0,  // Roll = 1 (25%)
+            6.0 / 16.0,  // Roll = 2 (37.5%)
+            4.0 / 16.0,  // Roll = 3 (25%)
+            1.0 / 16.0,  // Roll = 4 (6.25%)
+            1.0 / 16.0   // Roll = 5 (6.25%)
     };
     private static final int[] ROLLS = {1, 2, 3, 4, 5};
 
@@ -137,7 +138,7 @@ public class Game {
 
         for (Board move : possibleMoves) {
             // After Computer moves, we evaluate the resulting state via a CHANCE node
-            double value = expectiminimax(move, MAX_DEPTH - 1, "CHANCE", diceRoll);
+            double value = expectiminimax(move, MAX_DEPTH - 1, "CHANCE", diceRoll, player == 'W');
             if (value > alpha) {
                 alpha = value;
                 bestBoard = move;
@@ -146,11 +147,11 @@ public class Game {
         return bestBoard;
     }
 
-    private double expectiminimax(Board node, int depth, String nodeType, int roll) {
+    private double expectiminimax(Board node, int depth, String nodeType, int roll, boolean isWhite) {
         // 1. Terminal Node / Depth Reach
         if (depth == 0 || node.isFinal()) {
             // Heuristic always from Computer (White) perspective
-            return SenetHeuristic.minimalHeuristic(node, true);
+            return SenetHeuristic.minimalHeuristic(node, isWhite);
         }
 
         // 2. Adversary is to play (MIN)
@@ -161,11 +162,11 @@ public class Game {
             if (children.isEmpty()) {
                 Board skipped = node.deepCopy();
                 skipped.applySkipTurn(HUMAN);
-                return expectiminimax(skipped, depth - 1, "CHANCE", 0);
+                return expectiminimax(skipped, depth - 1, "CHANCE", roll, isWhite);
             }
 
             for (Board child : children) {
-                alpha = Math.min(alpha, expectiminimax(child, depth - 1, "CHANCE", 0));
+                alpha = Math.min(alpha, expectiminimax(child, depth - 1, "CHANCE", roll, isWhite));
             }
             return alpha;
         }
@@ -178,11 +179,11 @@ public class Game {
             if (children.isEmpty()) {
                 Board skipped = node.deepCopy();
                 skipped.applySkipTurn(COMPUTER);
-                return expectiminimax(skipped, depth - 1, "CHANCE", 0);
+                return expectiminimax(skipped, depth - 1, "CHANCE", roll, isWhite);
             }
 
             for (Board child : children) {
-                alpha = Math.max(alpha, expectiminimax(child, depth - 1, "CHANCE", 0));
+                alpha = Math.max(alpha, expectiminimax(child, depth - 1, "CHANCE", roll, isWhite));
             }
             return alpha;
         }
@@ -198,7 +199,7 @@ public class Game {
 
                 // For Senet, we simplify: after computer moves, it's human's turn (MIN)
                 // Since this CHANCE node is called after a move, the next player is the opponent.
-                alpha += PROBABILITIES[i] * expectiminimax(node, depth - 1, "MIN", ROLLS[i]);
+                alpha += PROBABILITIES[i] * expectiminimax(node, depth - 1, nextType, ROLLS[i], isWhite);
             }
             return alpha;
         }

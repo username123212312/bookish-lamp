@@ -40,7 +40,11 @@ public class SenetHeuristic {
         for (Pawn p : myPieces.values()) {
             int pos = p.getIndex();
             if (pos >= 27 && pos <= 29) {
-                bonus -= 5; // Penalty for being in danger zone when ahead
+                if (pos == 28) {
+                    bonus -= 3;
+                } else {
+                    bonus -= 5; // Penalty for being in danger zone when ahead
+                }
             }
         }
         return bonus;

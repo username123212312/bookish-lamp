@@ -1,5 +1,5 @@
 // A simple container for the Best Move and its Score
-public record MoveResult(Board bestBoard, double score) {}
+public record MoveResult(Board bestBoard, int score) {}
 
 // Example usage:
 // MoveResult result = maxMove(board);

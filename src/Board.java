@@ -3,10 +3,12 @@ import java.util.*;
 public class Board {
     private final Pawn[] list;
     private Action action;
+    private char player;
     Map<Integer, Pawn> whitePawnMap = new TreeMap<>();
     Map<Integer, Pawn> blackPawnMap = new TreeMap<>();
     List<String> whiteFinishList = new ArrayList<>();
     List<String> blackFinishList = new ArrayList<>();
+
 
     public Board() {
         list = new Pawn[31];
@@ -29,6 +31,10 @@ public class Board {
         this.blackFinishList = blackFinishList;
         this.whitePawnMap = whitePawnMap;
         this.whiteFinishList = whiteFinishList;
+    }
+
+    public char getPlayer() {
+        return player;
     }
 
     private List<Action> getPossibleActions(char player, int numMoves) {
@@ -229,7 +235,7 @@ public class Board {
 
     // skip if no possible action and apply penalized Pawns
     public void applySkipTurn(char player) {
-        checkAndApplyPenalties(new Pawn(player == 'W', -1));
+        this.player = (player == 'W') ? 'B' : 'W';
     }
 
     public String promotedNum() {

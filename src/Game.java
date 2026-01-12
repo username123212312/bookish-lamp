@@ -41,7 +41,7 @@ public class Game {
 
             // --- Human Turn ---
             System.out.println("=== HUMAN TURN ===");
-            computerPlay(HUMAN);
+            humanPlay(HUMAN);
             if (board.checkWin(HUMAN)) {
                 System.out.println(board.toString());
                 System.out.println(board.promotedNum());
@@ -56,7 +56,7 @@ public class Game {
 
             // --- Computer Turn ---
             System.out.println("=== COMPUTER TURN ===");
-            computerPlay(COMPUTER);
+            computerPlay();
             if (board.checkWin(COMPUTER)) {
                 System.out.println(board.toString());
                 System.out.println(board.promotedNum());
@@ -110,98 +110,184 @@ public class Game {
         }
     }
 
-    // --- EXPECTIMINIMAX COMPUTER PLAY ---
-
-    private void computerPlay(char player) {
+    private void computerPlay() {
         int tossValue = toss();
         System.out.println("Computer toss: " + tossValue);
 
-        // Get best move for this specific dice roll using expectiminimax
-        Board bestMove = getBestMoveForRoll(board, player, tossValue);
+        MoveResult result = maxValue(board, MAX_DEPTH, tossValue , Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
-        if (bestMove != null) {
-            board = bestMove;
-            System.out.println("Computer plays: " + bestMove.getAction());
-        } else {
-            System.out.println("No valid moves. Computer skips turn.");
+        if (result != null ) {
+            board = result.bestBoard();
+            System.out.println("Computer plays: " + board.getAction());
+        }
+        else {
+            System.out.println("No valid moves, Computer skips turn");
             board.applySkipTurn(COMPUTER);
         }
     }
 
-    private Board getBestMoveForRoll(Board currentBoard, char player, int diceRoll) {
-        List<Board> possibleMoves = currentBoard.generateNextStates(player, diceRoll);
-
-        if (possibleMoves.isEmpty()) return null;
-
-        Board bestBoard = null;
-        double alpha = Double.NEGATIVE_INFINITY;
-
-        for (Board move : possibleMoves) {
-            // After Computer moves, we evaluate the resulting state via a CHANCE node
-            double value = expectiminimax(move, MAX_DEPTH - 1, "CHANCE", diceRoll, player == 'W');
-            if (value > alpha) {
-                alpha = value;
-                bestBoard = move;
-            }
+    private MoveResult maxValue(Board board, int depth, int currentRoll, double alpha, double beta) {
+        if (depth <= 0 || board.isFinal()) {
+            return new MoveResult(board, SenetHeuristic.minimalHeuristic(board, true));
         }
-        return bestBoard;
-    }
+            List<Board> children = board.generateNextStates(COMPUTER, currentRoll);
+            if (children.isEmpty()) return null;
 
-    private double expectiminimax(Board node, int depth, String nodeType, int roll, boolean isWhite) {
-        // 1. Terminal Node / Depth Reach
-        if (depth == 0 || node.isFinal()) {
-            // Heuristic always from Computer (White) perspective
-            return SenetHeuristic.minimalHeuristic(node, isWhite);
-        }
-
-        // 2. Adversary is to play (MIN)
-        if (nodeType.equals("MIN")) {
-            double alpha = Double.POSITIVE_INFINITY;
-            List<Board> children = node.generateNextStates(HUMAN, roll);
-
-            if (children.isEmpty()) {
-                Board skipped = node.deepCopy();
-                skipped.applySkipTurn(HUMAN);
-                return expectiminimax(skipped, depth - 1, "CHANCE", roll, isWhite);
-            }
+            Board bestBoard = null;
+            double maxEval = Double.NEGATIVE_INFINITY;
 
             for (Board child : children) {
-                alpha = Math.min(alpha, expectiminimax(child, depth - 1, "CHANCE", roll, isWhite));
+                double eval = chanceValue(child, depth - 1, false , alpha , beta);
+                if (eval > maxEval) {
+                    maxEval = eval;
+                    bestBoard = child;
+                }
+                alpha = Math.max(alpha, eval);
+                if (beta <= alpha) break;
             }
-            return alpha;
-        }
+            return new MoveResult(bestBoard, maxEval);
+    }
 
-        // 3. We are to play (MAX)
-        else if (nodeType.equals("MAX")) {
-            double alpha = Double.NEGATIVE_INFINITY;
-            List<Board> children = node.generateNextStates(COMPUTER, roll);
+    private MoveResult minValue(Board board, int depth, double alpha, double beta) {
+        if (depth <= 0 || board.isFinal()) {
+            return new MoveResult(board, SenetHeuristic.minimalHeuristic(board, false));
+        }
+        double eval = chanceValue(board, depth - 1, true , alpha, beta);
+        return new MoveResult(board, eval);
+    }
+
+    private double chanceValue(Board board, int depth, boolean isMax, double alpha, double beta) {
+        double expectedValue = 0;
+
+        for (int i = 0; i < ROLLS.length; i++) {
+            int roll = ROLLS[i];
+            double prob = PROBABILITIES[i];
+
+             char currentPlayer = isMax ? COMPUTER : HUMAN;
+            List<Board> children = board.generateNextStates(currentPlayer, roll);
 
             if (children.isEmpty()) {
-                Board skipped = node.deepCopy();
-                skipped.applySkipTurn(COMPUTER);
-                return expectiminimax(skipped, depth - 1, "CHANCE", roll, isWhite);
-            }
+                Board skipped = board.deepCopy();
+                skipped.applySkipTurn(currentPlayer);
 
-            for (Board child : children) {
-                alpha = Math.max(alpha, expectiminimax(child, depth - 1, "CHANCE", roll, isWhite));
+                MoveResult res = isMax ? maxValue(skipped, depth - 1 , roll , alpha , beta)
+                                       : minValue(skipped, depth - 1, alpha , beta);
+                expectedValue += prob * res.score();
+            } else {
+                double bestVal = isMax ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
+
+                for (Board child : children) {
+                    MoveResult res = isMax ? maxValue(child, depth - 1, roll , alpha , beta)
+                                           : minValue(child, depth - 1 , alpha , beta);
+
+                    if (isMax) {
+                        bestVal = Math.max(bestVal, res.score());
+                        alpha = Math.max(alpha, bestVal);
+                    } else {
+                        bestVal = Math.min(bestVal, res.score());
+                        beta = Math.min(beta, bestVal);
+                    }
+                    if (beta <= alpha) break;
+                }
+                expectedValue += prob * bestVal;
             }
-            return alpha;
         }
-
-        // 4. Random event (CHANCE)
-        else { // nodeType.equals("CHANCE")
-            double alpha = 0;
-            for (int i = 0; i < ROLLS.length; i++) {
-                // Determine who plays after this random toss
-                // If the previous layer was MAX, the next layer (after chance) is MIN
-                // We use depth - 1 here as the random event itself is a layer
-                String nextType = (depth % 2 == 0) ? "MAX" : "MIN";
-
-                // For Senet, we simplify: after computer moves, it's human's turn (MIN)
-                // Since this CHANCE node is called after a move, the next player is the opponent.
-                alpha += PROBABILITIES[i] * expectiminimax(node, depth - 1, nextType, ROLLS[i], isWhite);
-            }
-            return alpha;
-        }
+        return expectedValue;
     }
+
+    // --- EXPECTIMINIMAX COMPUTER PLAY ---
+
+//    private void computerPlay(char player) {
+//        int tossValue = toss();
+//        System.out.println("Computer toss: " + tossValue);
+//
+//        // Get best move for this specific dice roll using expectiminimax
+//        Board bestMove = getBestMoveForRoll(board, player, tossValue);
+//
+//        if (bestMove != null) {
+//            board = bestMove;
+//            System.out.println("Computer plays: " + bestMove.getAction());
+//        } else {
+//            System.out.println("No valid moves. Computer skips turn.");
+//            board.applySkipTurn(COMPUTER);
+//        }
+//    }
+//
+//    private Board getBestMoveForRoll(Board currentBoard, char player, int diceRoll) {
+//        List<Board> possibleMoves = currentBoard.generateNextStates(player, diceRoll);
+//
+//        if (possibleMoves.isEmpty()) return null;
+//
+//        Board bestBoard = null;
+//        double alpha = Double.NEGATIVE_INFINITY;
+//
+//        for (Board move : possibleMoves) {
+//            // After Computer moves, we evaluate the resulting state via a CHANCE node
+//            double value = expectiminimax(move, MAX_DEPTH - 1, "CHANCE", diceRoll, player == 'W');
+//            if (value > alpha) {
+//                alpha = value;
+//                bestBoard = move;
+//            }
+//        }
+//        return bestBoard;
+//    }
+//
+//    private double expectiminimax(Board node, int depth, String nodeType, int roll, boolean isWhite) {
+//        // 1. Terminal Node / Depth Reach
+//        if (depth == 0 || node.isFinal()) {
+//            // Heuristic always from Computer (White) perspective
+//            return SenetHeuristic.minimalHeuristic(node, isWhite);
+//        }
+//
+//        // 2. Adversary is to play (MIN)
+//        if (nodeType.equals("MIN")) {
+//            double alpha = Double.POSITIVE_INFINITY;
+//            List<Board> children = node.generateNextStates(HUMAN, roll);
+//
+//            if (children.isEmpty()) {
+//                Board skipped = node.deepCopy();
+//                skipped.applySkipTurn(HUMAN);
+//                return expectiminimax(skipped, depth - 1, "CHANCE", roll, isWhite);
+//            }
+//
+//            for (Board child : children) {
+//                alpha = Math.min(alpha, expectiminimax(child, depth - 1, "CHANCE", roll, isWhite));
+//            }
+//            return alpha;
+//        }
+//
+//        // 3. We are to play (MAX)
+//        else if (nodeType.equals("MAX")) {
+//            double alpha = Double.NEGATIVE_INFINITY;
+//            List<Board> children = node.generateNextStates(COMPUTER, roll);
+//
+//            if (children.isEmpty()) {
+//                Board skipped = node.deepCopy();
+//                skipped.applySkipTurn(COMPUTER);
+//                return expectiminimax(skipped, depth - 1, "CHANCE", roll, isWhite);
+//            }
+//
+//            for (Board child : children) {
+//                alpha = Math.max(alpha, expectiminimax(child, depth - 1, "CHANCE", roll, isWhite));
+//            }
+//            return alpha;
+//        }
+//
+//        // 4. Random event (CHANCE)
+//        else { // nodeType.equals("CHANCE")
+//            double alpha = 0;
+//            for (int i = 0; i < ROLLS.length; i++) {
+//                // Determine who plays after this random toss
+//                // If the previous layer was MAX, the next layer (after chance) is MIN
+//                // We use depth - 1 here as the random event itself is a layer
+//                String nextType = (depth % 2 == 0) ? "MAX" : "MIN";
+//
+//                // For Senet, we simplify: after computer moves, it's human's turn (MIN)
+//                // Since this CHANCE node is called after a move, the next player is the opponent.
+//                alpha += PROBABILITIES[i] * expectiminimax(node, depth - 1, nextType, ROLLS[i], isWhite);
+//            }
+//            return alpha;
+//        }
+//    }
+
 }

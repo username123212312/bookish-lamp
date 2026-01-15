@@ -42,27 +42,27 @@ public class Board {
             }
             if (currentIndex == 25) {
                 if (numMoves == 5) {
-                    action = new Action(pawn, 30);
+                    action = new Action(pawn, 30, ActionType.PROMOTION);
                 } else if (newIndex <= 29) {
                     Pawn nextSquare = list[newIndex];
                     if (nextSquare == null || (nextSquare.isWhite() != pawn.isWhite())) {
                         if (!((newIndex == 25 || newIndex == 27 || newIndex == 28) && nextSquare != null)) {
-                            action = new Action(pawn, newIndex);
+                            action = new Action(pawn, newIndex, ActionType.REPLACEMENT);
                         }
                     }
                 }
             } else if (currentIndex == 27) {
                 if (numMoves == 3) {
-                    action = new Action(pawn, 30);
+                    action = new Action(pawn, 30, ActionType.PROMOTION);
 
                 }
             } else if (currentIndex == 28) {
                 if (numMoves == 2) {
-                    action = new Action(pawn, 30);
+                    action = new Action(pawn, 30, ActionType.PROMOTION);
 
                 }
             } else if (currentIndex == 29) {
-                action = new Action(pawn, 30);
+                action = new Action(pawn, 30, ActionType.PROMOTION);
 
             } else if (newIndex <= 29) {
                 Pawn nextSquare = list[newIndex];
@@ -71,7 +71,7 @@ public class Board {
                     if (isSpecialSquare && nextSquare != null) {
                         continue;
                     }
-                    action = new Action(pawn, newIndex);
+                    action = new Action(pawn, newIndex, ActionType.NORMAL);
                 }
             }
             if (action != null) {
@@ -83,17 +83,17 @@ public class Board {
 
     public void applyAction(Action action) {
 
-        if (action.newIndex() == 30) {
-            list[action.pawn().getIndex()] = null;
-            if (action.pawn().isWhite()) {
-                whitePawnMap.remove(action.pawn().getIndex());
+        if (action.getNewIndex() == 30) {
+            list[action.getPawn().getIndex()] = null;
+            if (action.getPawn().isWhite()) {
+                whitePawnMap.remove(action.getPawn().getIndex());
                 whiteFinishList.add("W");
             } else {
-                blackPawnMap.remove(action.pawn().getIndex());
+                blackPawnMap.remove(action.getPawn().getIndex());
                 blackFinishList.add("B");
             }
-        } else if (action.newIndex() == 26) {
-            checkAndApplyPenalties(returnToHouseOfReborn(action.pawn()));
+        } else if (action.getNewIndex() == 26) {
+            checkAndApplyPenalties(returnToHouseOfReborn(action.getPawn()));
         } else {
             checkAndApplyPenalties(replaceIfNotNull(action));
         }
@@ -174,17 +174,19 @@ public class Board {
     }
 
     private Pawn replaceIfNotNull(Action action) {
-        int toBeReplacedIndex = action.newIndex();
+
+        int toBeReplacedIndex = action.getNewIndex();
         Pawn toBeReplaced = list[toBeReplacedIndex] == null ? null : list[toBeReplacedIndex].deepCopy();
 
-        int replacementIndex = action.pawn().getIndex();
-        Pawn replacement = action.pawn().deepCopy();
+        int replacementIndex = action.getPawn().getIndex();
+        Pawn replacement = action.getPawn().deepCopy();
 
         replacement.setIndex(toBeReplacedIndex);
         changeIndexesInMaps(replacement, replacementIndex, toBeReplacedIndex);
         list[toBeReplacedIndex] = replacement;
 
         if (toBeReplaced != null) {
+            action.setActionType(ActionType.REPLACEMENT);
             if (toBeReplacedIndex > 26 && toBeReplacedIndex < 30) {
                 returnToHouseOfReborn(toBeReplaced);
             } else {

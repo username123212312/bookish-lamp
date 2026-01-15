@@ -14,7 +14,7 @@ public class Game {
     private final char HUMAN = 'B';
 
     // Constants for expectiminimax
-    private static final int MAX_DEPTH = 4;
+    private static final int MAX_DEPTH = 3;
     private static final double[] PROBABILITIES = {
             4.0 / 16.0,  // Roll = 1 (25%)
             6.0 / 16.0,  // Roll = 2 (37.5%)

@@ -14,7 +14,7 @@ public class Game {
     private final char HUMAN = 'B';
 
     // Constants for expectiminimax
-    private static final int MAX_DEPTH = 3;
+    private static final int MAX_DEPTH = 4;
     private static final double[] PROBABILITIES = {
             4.0 / 16.0,  // Roll = 1 (25%)
             6.0 / 16.0,  // Roll = 2 (37.5%)
@@ -138,7 +138,7 @@ public class Game {
 
         for (Board move : possibleMoves) {
             // After Computer moves, we evaluate the resulting state via a CHANCE node
-            double value = expectiminimax(move, MAX_DEPTH - 1, "CHANCE", diceRoll, player == 'W');
+            double value = expectiminimax(move, MAX_DEPTH - 1, "MAX", diceRoll, player == 'W');
             if (value > alpha) {
                 alpha = value;
                 bestBoard = move;
@@ -199,7 +199,7 @@ public class Game {
 
                 // For Senet, we simplify: after computer moves, it's human's turn (MIN)
                 // Since this CHANCE node is called after a move, the next player is the opponent.
-                alpha += PROBABILITIES[i] * expectiminimax(node, depth - 1, nextType, ROLLS[i], isWhite);
+                alpha += PROBABILITIES[i] * expectiminimax(node, depth - 1, "MIN", ROLLS[i], isWhite);
             }
             return alpha;
         }

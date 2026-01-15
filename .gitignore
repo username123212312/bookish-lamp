@@ -2,6 +2,9 @@
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+.idea
+senet_game_algo.iml
+*.iml
 
 ### Eclipse ###
 .apt_generated
@@ -27,3 +30,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### IDE config files ###
+*.iml

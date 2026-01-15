@@ -47,7 +47,7 @@ public class Board {
                     Pawn nextSquare = list[newIndex];
                     if (nextSquare == null || (nextSquare.isWhite() != pawn.isWhite())) {
                         if (!((newIndex == 25 || newIndex == 27 || newIndex == 28) && nextSquare != null)) {
-                            action = new Action(pawn, newIndex, ActionType.REPLACEMENT);
+                            action = new Action(pawn, newIndex, ActionType.NORMAL);
                         }
                     }
                 }
@@ -186,7 +186,7 @@ public class Board {
         list[toBeReplacedIndex] = replacement;
 
         if (toBeReplaced != null) {
-            action.setActionType(ActionType.REPLACEMENT);
+            action.setActionType(ActionType.REPLACEMENT, toBeReplaced);
             if (toBeReplacedIndex > 26 && toBeReplacedIndex < 30) {
                 returnToHouseOfReborn(toBeReplaced);
             } else {

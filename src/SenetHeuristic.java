@@ -77,4 +77,6 @@ public class SenetHeuristic {
         }
         return penalty;
     }
+
+
 }

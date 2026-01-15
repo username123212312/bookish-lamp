@@ -1,6 +1,7 @@
 public class Action {
     private static boolean isDetailed = false;
     private ActionType actionType;
+    private Pawn toBeReplaced;
     private Pawn pawn;
     int newIndex;
 
@@ -10,8 +11,19 @@ public class Action {
         this.newIndex = newIndex;
     }
 
+    public Action(Pawn pawn, int newIndex, ActionType actionType, Pawn toBeReplaced) {
+        this.pawn = pawn;
+        this.newIndex = newIndex;
+        this.actionType = actionType;
+        this.toBeReplaced = toBeReplaced;
+    }
+
     public Action deepCopy() {
         return new Action(pawn.deepCopy(), newIndex, actionType);
+    }
+
+    public void setToBeReplaced(Pawn toBeReplaced) {
+        this.toBeReplaced = toBeReplaced;
     }
 
     public static void setIsDetailed(boolean isDetailed) {
@@ -22,8 +34,9 @@ public class Action {
         return actionType;
     }
 
-    public void setActionType(ActionType actionType) {
+    public void setActionType(ActionType actionType, Pawn toBeReplaced) {
         this.actionType = actionType;
+        this.toBeReplaced = toBeReplaced;
     }
 
     public Pawn getPawn() {
@@ -36,12 +49,15 @@ public class Action {
 
     @Override
     public String toString() {
-        if (newIndex == 30) {
-            return "Promote " + (pawn.isWhite() ? "White" : "Black")
-                    + " Pawn ";
-        } else {
-            return "Move " + (pawn.isWhite() ? "White" : "Black")
+        return switch (actionType) {
+            case ActionType.NORMAL -> "Move " + (pawn.isWhite() ? "White" : "Black")
                     + " Pawn From " + pawn.getIndex() + " To " + newIndex;
-        }
+            case ActionType.PROMOTION -> "Promote " + (pawn.isWhite() ? "White" : "Black")
+                    + " Pawn ";
+            case ActionType.REPLACEMENT -> "Swapped " + (pawn.isWhite() ? "White" : "Black")
+                    + " Pawn ( " + pawn.getIndex() +" ) " + " With " + (toBeReplaced.isWhite() ? "White" : "Black")
+                    + " Pawn ( " + newIndex + " ) "
+            ;
+        };
     }
 }

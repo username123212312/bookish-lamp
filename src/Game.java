@@ -124,7 +124,7 @@ public class Game {
             System.out.println("Computer plays: " + bestMove.getAction());
         } else {
             System.out.println("No valid moves. Computer skips turn.");
-            board.applySkipTurn(COMPUTER);
+            board.applySkipTurn(player);
         }
     }
 

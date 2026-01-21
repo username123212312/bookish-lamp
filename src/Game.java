@@ -141,23 +141,34 @@ public class Game {
         if (possibleMoves.isEmpty()) return null;
 
         Board bestBoard = null;
-        double alpha = Double.NEGATIVE_INFINITY;
+        double alpha = player == 'W' ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
 
         for (Board move : possibleMoves) {
             addVisitedNodes(player == 'W');
 
             // After Computer moves, we evaluate the resulting state via a CHANCE node
-            double value = expectiminimax(move, MAX_DEPTH, MAX_DEPTH % 2 == 0 ? "MAX" : "MIN", diceRoll, player == 'W');
-            if (value > alpha) {
-                alpha = value;
-                bestBoard = move;
+            double value = expectiminimax(move, MAX_DEPTH, player == 'W' ? "MAX" : "MIN",
+                    player == 'W' ? "MAX" : "MIN",
+                    diceRoll, player == 'W');
+
+            if (player == 'W') {
+                if (value > alpha) {
+                    alpha = value;
+                    bestBoard = move;
+                }
+            } else {
+                if (value < alpha) {
+                    alpha = value;
+                    bestBoard = move;
+                }
             }
         }
         map.put(alpha, bestBoard);
         return map;
     }
 
-    private double expectiminimax(Board node, int depth, String nodeType, int roll, boolean isWhite) {
+    private double expectiminimax(Board node, int depth, String preType,
+                                  String nodeType, int roll, boolean isWhite) {
         // 1. Terminal Node / Depth Reach
         if (depth == 0 || node.isFinal()) {
             // Heuristic always from Computer (White) perspective
@@ -172,14 +183,13 @@ public class Game {
             if (children.isEmpty()) {
                 Board skipped = node.deepCopy();
                 skipped.applySkipTurn(HUMAN);
-                return expectiminimax(skipped, depth - 1, "CHANCE", roll, isWhite);
+                return expectiminimax(skipped, depth - 1, "MIN", "CHANCE"
+                        , roll, isWhite);
             }
-
             for (Board child : children) {
-
                 addVisitedNodes(isWhite);
-
-                alpha = Math.min(alpha, expectiminimax(child, depth - 1, "CHANCE", roll, isWhite));
+                alpha = Math.min(alpha, expectiminimax(child, depth - 1, "MIN", "CHANCE"
+                        , roll, isWhite));
             }
             return alpha;
         }
@@ -192,12 +202,14 @@ public class Game {
             if (children.isEmpty()) {
                 Board skipped = node.deepCopy();
                 skipped.applySkipTurn(COMPUTER);
-                return expectiminimax(skipped, depth - 1, "CHANCE", roll, isWhite);
+                return expectiminimax(skipped, depth - 1, "MAX", "CHANCE"
+                        , roll, isWhite);
             }
 
             for (Board child : children) {
                 addVisitedNodes(isWhite);
-                alpha = Math.max(alpha, expectiminimax(child, depth - 1, "CHANCE", roll, isWhite));
+                alpha = Math.max(alpha, expectiminimax(child, depth - 1, "MAX", "CHANCE"
+                        , roll, isWhite));
             }
             return alpha;
         }
@@ -209,22 +221,22 @@ public class Game {
                 // Determine who plays after this random toss
                 // If the previous layer was MAX, the next layer (after chance) is MIN
                 // We use depth - 1 here as the random event itself is a layer
-                String nextType = (depth % 2 == 0) ? "MAX" : "MIN";
+                String nextType = Objects.equals(preType, "MAX") ? "MIN" : "MAX";
 
                 // For Senet, we simplify: after computer moves, it's human's turn (MIN)
                 // Since this CHANCE node is called after a move, the next player is the opponent.
                 addVisitedNodes(isWhite);
 
-                alpha += PROBABILITIES[i] * expectiminimax(node, depth, nextType, ROLLS[i], isWhite);
+                alpha += PROBABILITIES[i] * expectiminimax(node, depth - 1, preType, nextType, ROLLS[i], isWhite);
             }
             return alpha;
         }
     }
 
-    private void addVisitedNodes(boolean isWhite){
-        if(isWhite){
+    private void addVisitedNodes(boolean isWhite) {
+        if (isWhite) {
             whiteVisitedNodes.add(0);
-        }else{
+        } else {
             blackVisitedNodes.add(0);
         }
     }

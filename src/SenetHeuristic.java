@@ -14,22 +14,37 @@ public class SenetHeuristic {
         // Get opponent pieces separately to avoid unused variable
         Map<Integer, Pawn> oppPieces = isWhitePlayer ? board.blackPawnMap : board.whitePawnMap;
         for (Pawn p : oppPieces.values()) oppSum += p.getIndex();
+        double score = 0.0;
+        if (isWhitePlayer) {
+            score = (myFinished * 20 + mySum) - (oppFinished * 20 + oppSum);
+            // Add strategy: If ahead, play safe; if behind, take risks
+            if (myFinished > oppFinished) {
+                score += safeBonus(board, isWhitePlayer);
+            } else if (myFinished < oppFinished) {
+                // We're behind - take more risks
+                score += aggressiveBonus(board, isWhitePlayer);
+            }
 
-        double score = (myFinished * 20 + mySum) - (oppFinished * 20 + oppSum);
+            // Always: Avoid House of Water (square 26) unless it helps finish
+            score += waterSquarePenalty(board, isWhitePlayer);
 
-        // Add strategy: If ahead, play safe; if behind, take risks
-        if (myFinished > oppFinished) {
-            // We're ahead - avoid dangerous squares
-            score += safeBonus(board, isWhitePlayer);
-        } else if (myFinished < oppFinished) {
-            // We're behind - take more risks
-            score += aggressiveBonus(board, isWhitePlayer);
+        } else {
+            score = (myFinished * 20 - mySum) + (oppFinished * 20 - oppSum);
+            // Add strategy: If ahead, play safe; if behind, take risks
+            if (myFinished < oppFinished) {
+                score -= safeBonus(board, isWhitePlayer);
+            } else if (myFinished > oppFinished) {
+                // We're behind - take more risks
+                score -= aggressiveBonus(board, isWhitePlayer);
+            }
+
+            // Always: Avoid House of Water (square 26) unless it helps finish
+            score -= waterSquarePenalty(board, isWhitePlayer);
+
         }
-
-        // Always: Avoid House of Water (square 26) unless it helps finish
-        score += waterSquarePenalty(board, isWhitePlayer);
-
         return score;
+
+
     }
 
     private static double safeBonus(Board board, boolean isWhitePlayer) {
@@ -77,6 +92,4 @@ public class SenetHeuristic {
         }
         return penalty;
     }
-
-
 }

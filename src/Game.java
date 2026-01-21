@@ -220,7 +220,6 @@ public class Game {
             for (int i = 0; i < ROLLS.length; i++) {
                 // Determine who plays after this random toss
                 // If the previous layer was MAX, the next layer (after chance) is MIN
-                // We use depth - 1 here as the random event itself is a layer
                 String nextType = preType.equals("MAX") ? "MIN" : "MAX";
 
                 // For Senet, we simplify: after computer moves, it's human's turn (MIN)

@@ -1,13 +1,13 @@
 // Game.java - Complete with Expectiminimax
 
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 public class Game {
     private final static int[] tosses = {1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 5};
     private Board board;
     private final Scanner scanner;
+    private final List<Integer> blackVisitedNodes = new ArrayList<>();
+    private final List<Integer> whiteVisitedNodes = new ArrayList<>();
 
     // Define pieces
     private final char COMPUTER = 'W';
@@ -113,23 +113,30 @@ public class Game {
     // --- EXPECTIMINIMAX COMPUTER PLAY ---
 
     private void computerPlay(char player) {
+
         int tossValue = toss();
         System.out.println("Computer toss: " + tossValue);
 
         // Get best move for this specific dice roll using expectiminimax
-        Board bestMove = getBestMoveForRoll(board, player, tossValue);
-
+        Map<Double, Board> bestMove = getBestMoveForRoll(board, player, tossValue);
         if (bestMove != null) {
-            board = bestMove;
-            System.out.println("Computer plays: " + bestMove.getAction());
+            Double evaluationValue = (Double) (bestMove.keySet().toArray())[0];
+            Board bestMoveBoard = bestMove.get(evaluationValue);
+            board = bestMoveBoard;
+            System.out.println("Computer plays: " + bestMoveBoard.getAction());
+            System.out.println("Evaluation value : " + evaluationValue);
         } else {
             System.out.println("No valid moves. Computer skips turn.");
             board.applySkipTurn(player);
         }
+        System.out.println("Visited nodes so far : " + (player == 'W' ? whiteVisitedNodes.size()
+                : blackVisitedNodes.size()));
+
     }
 
-    private Board getBestMoveForRoll(Board currentBoard, char player, int diceRoll) {
+    private Map<Double, Board> getBestMoveForRoll(Board currentBoard, char player, int diceRoll) {
         List<Board> possibleMoves = currentBoard.generateNextStates(player, diceRoll);
+        Map<Double, Board> map = new HashMap<>();
 
         if (possibleMoves.isEmpty()) return null;
 
@@ -137,14 +144,17 @@ public class Game {
         double alpha = Double.NEGATIVE_INFINITY;
 
         for (Board move : possibleMoves) {
+            addVisitedNodes(player == 'W');
+
             // After Computer moves, we evaluate the resulting state via a CHANCE node
-            double value = expectiminimax(move, MAX_DEPTH - 1, "MAX", diceRoll, player == 'W');
+            double value = expectiminimax(move, MAX_DEPTH, MAX_DEPTH % 2 == 0 ? "MAX" : "MIN", diceRoll, player == 'W');
             if (value > alpha) {
                 alpha = value;
                 bestBoard = move;
             }
         }
-        return bestBoard;
+        map.put(alpha, bestBoard);
+        return map;
     }
 
     private double expectiminimax(Board node, int depth, String nodeType, int roll, boolean isWhite) {
@@ -166,6 +176,9 @@ public class Game {
             }
 
             for (Board child : children) {
+
+                addVisitedNodes(isWhite);
+
                 alpha = Math.min(alpha, expectiminimax(child, depth - 1, "CHANCE", roll, isWhite));
             }
             return alpha;
@@ -183,6 +196,7 @@ public class Game {
             }
 
             for (Board child : children) {
+                addVisitedNodes(isWhite);
                 alpha = Math.max(alpha, expectiminimax(child, depth - 1, "CHANCE", roll, isWhite));
             }
             return alpha;
@@ -199,9 +213,19 @@ public class Game {
 
                 // For Senet, we simplify: after computer moves, it's human's turn (MIN)
                 // Since this CHANCE node is called after a move, the next player is the opponent.
-                alpha += PROBABILITIES[i] * expectiminimax(node, depth - 1, "MIN", ROLLS[i], isWhite);
+                addVisitedNodes(isWhite);
+
+                alpha += PROBABILITIES[i] * expectiminimax(node, depth, nextType, ROLLS[i], isWhite);
             }
             return alpha;
+        }
+    }
+
+    private void addVisitedNodes(boolean isWhite){
+        if(isWhite){
+            whiteVisitedNodes.add(0);
+        }else{
+            blackVisitedNodes.add(0);
         }
     }
 }

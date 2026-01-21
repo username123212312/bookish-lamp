@@ -221,13 +221,14 @@ public class Game {
                 // Determine who plays after this random toss
                 // If the previous layer was MAX, the next layer (after chance) is MIN
                 // We use depth - 1 here as the random event itself is a layer
-                String nextType = Objects.equals(preType, "MAX") ? "MIN" : "MAX";
+                String nextType = preType.equals("MAX") ? "MIN" : "MAX";
 
                 // For Senet, we simplify: after computer moves, it's human's turn (MIN)
                 // Since this CHANCE node is called after a move, the next player is the opponent.
                 addVisitedNodes(isWhite);
 
-                alpha += PROBABILITIES[i] * expectiminimax(node, depth - 1, preType, nextType, ROLLS[i], isWhite);
+                alpha += PROBABILITIES[i] * expectiminimax(node, depth - 1, preType, nextType,
+                        ROLLS[i], isWhite);
             }
             return alpha;
         }

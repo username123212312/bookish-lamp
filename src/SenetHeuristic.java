@@ -14,7 +14,7 @@ public class SenetHeuristic {
         // Get opponent pieces separately to avoid unused variable
         Map<Integer, Pawn> oppPieces = isWhitePlayer ? board.blackPawnMap : board.whitePawnMap;
         for (Pawn p : oppPieces.values()) oppSum += p.getIndex();
-        double score = 0.0;
+        double score;
         if (isWhitePlayer) {
             score = (myFinished * 20 + mySum) - (oppFinished * 20 + oppSum);
             // Add strategy: If ahead, play safe; if behind, take risks
@@ -26,7 +26,7 @@ public class SenetHeuristic {
             }
 
             // Always: Avoid House of Water (square 26) unless it helps finish
-            score += waterSquarePenalty(board, isWhitePlayer);
+//            score += waterSquarePenalty(board, isWhitePlayer);
 
         } else {
             score = (myFinished * 20 - mySum) + (oppFinished * 20 - oppSum);
@@ -39,7 +39,7 @@ public class SenetHeuristic {
             }
 
             // Always: Avoid House of Water (square 26) unless it helps finish
-            score -= waterSquarePenalty(board, isWhitePlayer);
+//            score -= waterSquarePenalty(board, isWhitePlayer);
 
         }
         return score;
@@ -80,16 +80,16 @@ public class SenetHeuristic {
         return bonus;
     }
 
-    private static double waterSquarePenalty(Board board, boolean isWhitePlayer) {
-        double penalty = 0;
-        Map<Integer, Pawn> myPieces = isWhitePlayer ? board.whitePawnMap : board.blackPawnMap;
-
-        // House of Water (square 26) is dangerous - avoid it
-        for (Pawn p : myPieces.values()) {
-            if (p.getIndex() == 26) {
-                penalty -= 10; // Big penalty for being stuck on water square
-            }
-        }
-        return penalty;
-    }
+//    private static double waterSquarePenalty(Board board, boolean isWhitePlayer) {
+//        double penalty = 0;
+//        Map<Integer, Pawn> myPieces = isWhitePlayer ? board.whitePawnMap : board.blackPawnMap;
+//
+//        // House of Water (square 26) is dangerous - avoid it
+//        for (Pawn p : myPieces.values()) {
+//            if (p.getIndex() == 26) {
+//                penalty -= 10; // Big penalty for being stuck on water square
+//            }
+//        }
+//        return penalty;
+//    }
 }

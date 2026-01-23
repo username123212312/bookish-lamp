@@ -8,13 +8,14 @@ public class Game {
     private final Scanner scanner;
     private final List<Integer> blackVisitedNodes = new ArrayList<>();
     private final List<Integer> whiteVisitedNodes = new ArrayList<>();
+    private boolean isDetailed = true;
 
     // Define pieces
     private final char COMPUTER = 'W';
     private final char HUMAN = 'B';
 
     // Constants for expectiminimax
-    private static final int MAX_DEPTH = 5;
+    private int MAX_DEPTH = 5;
     private static final double[] PROBABILITIES = {
             4.0 / 16.0,  // Roll = 1 (25%)
             6.0 / 16.0,  // Roll = 2 (37.5%)
@@ -32,6 +33,8 @@ public class Game {
     public void startGame() {
         System.out.println("Welcome to Senet (3x10)!");
         System.out.println("Game description");
+        isDetailed = promptForBoolean("Do you want to print details?");
+        MAX_DEPTH = promptForDepth();
 
         while (!board.isFinal()) {
             System.out.println(board.promotedNum());
@@ -124,13 +127,17 @@ public class Game {
             Board bestMoveBoard = bestMove.get(evaluationValue);
             board = bestMoveBoard;
             System.out.println("Computer plays: " + bestMoveBoard.getAction());
-            System.out.println("Evaluation value : " + evaluationValue);
+            if (isDetailed) {
+                System.out.println("Evaluation value : " + evaluationValue);
+            }
         } else {
             System.out.println("No valid moves. Computer skips turn.");
             board.applySkipTurn(player);
         }
-        System.out.println("Visited nodes so far : " + (player == 'W' ? whiteVisitedNodes.size()
-                : blackVisitedNodes.size()));
+        if (isDetailed) {
+            System.out.println("Visited nodes so far : " + (player == 'W' ? whiteVisitedNodes.size()
+                    : blackVisitedNodes.size()));
+        }
 
     }
 
@@ -169,28 +176,47 @@ public class Game {
 
     private double expectiminimax(Board node, int depth, String preType,
                                   String nodeType, int roll, boolean isWhite) {
+        logAlgorithmDetail("Entering " + nodeType + " node | Depth: " + depth +
+                " | Roll: " + roll + " | Player: " + (isWhite ? "White" : "Black"));
+
         // 1. Terminal Node / Depth Reach
         if (depth == 0 || node.isFinal()) {
-            // Heuristic always from Computer (White) perspective
-            return SenetHeuristic.minimalHeuristic(node, isWhite);
+            double heuristicValue = SenetHeuristic.minimalHeuristic(node, isWhite);
+            logAlgorithmDetail("TERMINAL NODE | Heuristic value: " + heuristicValue +
+                    " | Returning: " + heuristicValue);
+            return heuristicValue;
         }
 
         // 2. Adversary is to play (MIN)
         if (nodeType.equals("MIN")) {
             double alpha = Double.POSITIVE_INFINITY;
             List<Board> children = node.generateNextStates(HUMAN, roll);
+            logAlgorithmDetail("MIN NODE | Evaluating " + children.size() + " children");
 
             if (children.isEmpty()) {
                 Board skipped = node.deepCopy();
                 skipped.applySkipTurn(HUMAN);
-                return expectiminimax(skipped, depth - 1, "MIN", "CHANCE"
-                        , roll, isWhite);
+                logAlgorithmDetail("MIN NODE | No moves, skipping turn");
+                double result = expectiminimax(skipped, depth - 1, "MIN", "CHANCE", roll, isWhite);
+                logAlgorithmDetail("MIN NODE | Final value after skip: " + result);
+                return result;
             }
+            int childNum = 1;
             for (Board child : children) {
                 addVisitedNodes(isWhite);
-                alpha = Math.min(alpha, expectiminimax(child, depth - 1, "MIN", "CHANCE"
-                        , roll, isWhite));
+                logAlgorithmDetail("MIN NODE | Child " + childNum + "/" + children.size() +
+                        " | Action: " + child.getAction());
+                double childValue = expectiminimax(child, depth - 1, "MIN", "CHANCE", roll, isWhite);
+                logAlgorithmDetail("MIN NODE | Child " + childNum + " value: " + childValue +
+                        " | Current alpha: " + alpha);
+
+                if (childValue < alpha) {
+                    alpha = childValue;
+                    logAlgorithmDetail("MIN NODE | Updated alpha to: " + alpha);
+                }
+                childNum++;
             }
+            logAlgorithmDetail("MIN NODE | Returning final alpha: " + alpha);
             return alpha;
         }
 
@@ -198,38 +224,59 @@ public class Game {
         else if (nodeType.equals("MAX")) {
             double alpha = Double.NEGATIVE_INFINITY;
             List<Board> children = node.generateNextStates(COMPUTER, roll);
+            logAlgorithmDetail("MAX NODE | Evaluating " + children.size() + " children");
 
             if (children.isEmpty()) {
                 Board skipped = node.deepCopy();
                 skipped.applySkipTurn(COMPUTER);
-                return expectiminimax(skipped, depth - 1, "MAX", "CHANCE"
-                        , roll, isWhite);
+                logAlgorithmDetail("MAX NODE | No moves, skipping turn");
+                double result = expectiminimax(skipped, depth - 1, "MAX", "CHANCE", roll, isWhite);
+                logAlgorithmDetail("MAX NODE | Final value after skip: " + result);
+                return result;
             }
-
+            int childNum = 1;
             for (Board child : children) {
                 addVisitedNodes(isWhite);
-                alpha = Math.max(alpha, expectiminimax(child, depth - 1, "MAX", "CHANCE"
-                        , roll, isWhite));
+                logAlgorithmDetail("MAX NODE | Child " + childNum + "/" + children.size() +
+                        " | Action: " + child.getAction());
+                double childValue = expectiminimax(child, depth - 1, "MAX", "CHANCE", roll, isWhite);
+                logAlgorithmDetail("MAX NODE | Child " + childNum + " value: " + childValue +
+                        " | Current alpha: " + alpha);
+
+                if (childValue > alpha) {
+                    alpha = childValue;
+                    logAlgorithmDetail("MAX NODE | Updated alpha to: " + alpha);
+                }
+                childNum++;
             }
+            logAlgorithmDetail("MAX NODE | Returning final alpha: " + alpha);
             return alpha;
         }
 
         // 4. Random event (CHANCE)
         else { // nodeType.equals("CHANCE")
-            double alpha = 0;
+            logAlgorithmDetail("CHANCE NODE | Evaluating 5 possible dice rolls with probabilities");
+            double expectedValue = 0;
+
             for (int i = 0; i < ROLLS.length; i++) {
-                // Determine who plays after this random toss
-                // If the previous layer was MAX, the next layer (after chance) is MIN
                 String nextType = preType.equals("MAX") ? "MIN" : "MAX";
 
-                // For Senet, we simplify: after computer moves, it's human's turn (MIN)
-                // Since this CHANCE node is called after a move, the next player is the opponent.
-                addVisitedNodes(isWhite);
+                logAlgorithmDetail("CHANCE NODE | Roll " + ROLLS[i] + " (prob: " +
+                        String.format("%.2f", PROBABILITIES[i]) + ") | Next player: " + nextType);
 
-                alpha += PROBABILITIES[i] * expectiminimax(node, depth - 1, preType, nextType,
-                        ROLLS[i], isWhite);
+                double rollValue = expectiminimax(node, depth - 1, preType, nextType, ROLLS[i], isWhite);
+                double weightedValue = PROBABILITIES[i] * rollValue;
+
+                logAlgorithmDetail("CHANCE NODE | Roll " + ROLLS[i] + " value: " + rollValue +
+                        " | Weighted: " + String.format("%.4f", weightedValue));
+
+                expectedValue += weightedValue;
+                logAlgorithmDetail("CHANCE NODE | Cumulative expected value: " +
+                        String.format("%.4f", expectedValue));
             }
-            return alpha;
+            logAlgorithmDetail("CHANCE NODE | Returning expected value: " +
+                    String.format("%.4f", expectedValue));
+            return expectedValue;
         }
     }
 
@@ -238,6 +285,63 @@ public class Game {
             whiteVisitedNodes.add(0);
         } else {
             blackVisitedNodes.add(0);
+        }
+    }
+
+    private boolean promptForBoolean(String prompt) {
+        while (true) {
+            System.out.print(prompt + " (y/n): ");
+            String input = scanner.nextLine().trim().toLowerCase();
+
+            if (input.equals("yes") || input.equals("y")) {
+                return true;
+            } else if (input.equals("no") || input.equals("n")) {
+                return false;
+            } else {
+                System.out.println("Please enter 'yes' or 'no'.");
+            }
+        }
+    }
+
+    private int promptForDepth() {
+        final int MIN_DEPTH = 3;
+        final int DEFAULT_DEPTH = 5;
+        final int MAX_SUGGESTED_DEPTH = 10; // You can adjust this
+
+        while (true) {
+            System.out.print("Enter search depth for the algorithm (minimum " + MIN_DEPTH +
+                    ", default " + DEFAULT_DEPTH + ", suggested max " + MAX_SUGGESTED_DEPTH + "): ");
+
+            String input = scanner.nextLine().trim();
+
+            if (input.isEmpty()) {
+                System.out.println("Using default depth: " + DEFAULT_DEPTH);
+                return DEFAULT_DEPTH;
+            }
+
+            try {
+                int depth = Integer.parseInt(input);
+
+                if (depth < MIN_DEPTH) {
+                    System.out.println("Depth must be at least " + MIN_DEPTH + ". Please try again.");
+                } else if (depth > MAX_SUGGESTED_DEPTH) {
+                    System.out.println("Warning: Depth " + depth + " may cause performance issues.");
+                    boolean confirm = promptForBoolean("Are you sure you want to use depth " + depth + "?");
+                    if (confirm) {
+                        return depth;
+                    }
+                } else {
+                    return depth;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid integer.");
+            }
+        }
+    }
+
+    private void logAlgorithmDetail(String message) {
+        if (isDetailed) {
+            System.out.println("[ALGORITHM] " + message);
         }
     }
 }

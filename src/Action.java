@@ -1,5 +1,4 @@
 public class Action {
-    private static boolean isDetailed = false;
     private ActionType actionType;
     private Pawn toBeReplaced;
     private Pawn pawn;
@@ -18,17 +17,11 @@ public class Action {
         this.toBeReplaced = toBeReplaced;
     }
 
-    public Action deepCopy() {
-        return new Action(pawn.deepCopy(), newIndex, actionType);
-    }
 
     public void setToBeReplaced(Pawn toBeReplaced) {
         this.toBeReplaced = toBeReplaced;
     }
 
-    public static void setIsDetailed(boolean isDetailed) {
-        Action.isDetailed = isDetailed;
-    }
 
     public ActionType getActionType() {
         return actionType;

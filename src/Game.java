@@ -32,8 +32,13 @@ public class Game {
 
     public void startGame() {
         System.out.println("Welcome to Senet (3x10)!");
-        System.out.println("Game description");
-        isDetailed = promptForBoolean("Do you want to print details?");
+        String gameDescription = """
+                The objective of Senet\
+                 is to promote all your pieces from the board.
+                Pawns move across the board in a snake pattern.
+                At each move, you begin by throwing four sticks to determine how many squares you can move your pawns.""";
+        System.out.println(gameDescription);
+        isDetailed = promptForBoolean("Do you want to print details of algorithm?");
         MAX_DEPTH = promptForDepth();
 
         while (!board.isFinal()) {
